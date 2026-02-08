@@ -3,105 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard SGJT</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: #f9f9f9; }
-        .hidden { display: none; }
-        .btn-wa { background-color: #25D366; color: white; padding: 10px; text-decoration: none; display: inline-block; margin-top: 5px; border-radius: 5px; }
-        .status-active { color: green; font-weight: bold; border: 2px solid green; padding: 10px; text-align: center;}
-        .status-pending { color: orange; font-weight: bold; text-align: center;}
-    </style>
+    <title>Dashboard ARUS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300c6ff'/%3E%3Cstop offset='100%25' stop-color='%230072ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='32' fill='url(%23a)'/%3E%3Cpath fill='white' d='M32 12c-6.6 0-12 5.4-12 12 0 1.7.3 3.3 1 4.7L32 48l11-19.3c.7-1.4 1-3 1-4.7 0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z'/%3E%3C/svg%3E">
 </head>
 <body>
+    <div id="loading-overlay"><div class="wave-spinner"></div><p style="margin-top:10px; color:#0072ff; font-weight:600;">Memuat Data...</p></div>
+    <div id="toast-container"></div>
 
-    <div style="display: flex; justify-content: space-between;">
-        <h3>Halo, <span id="user-name">...</span></h3>
-        <button id="btnLogout">Logout</button>
-    </div>
-    <hr>
+    <div class="container">
+        <div class="brand-header">
+            <div class="brand-logo">ARUS 🌊</div>
+        </div>
 
-    <div id="pending-area" class="hidden">
-        <h4 class="status-pending">⚠️ AKUN BELUM AKTIF</h4>
-        <p>Silakan transfer <strong>Rp 30.000</strong> ke 4 rekening di bawah ini:</p>
-        <div id="transfer-list">Loading...</div>
-    </div>
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <small>Halo,</small>
+                <h3 id="user-name" style="color:var(--primary);">...</h3>
+                <span id="user-status" class="badge">...</span>
+            </div>
+            <button id="btnLogout" class="btn-danger" style="width:auto; padding:8px 15px;">Keluar</button>
+        </div>
 
-    <div id="active-area" class="hidden">
-        <div class="status-active">✅ AKUN AKTIF</div>
-        <div class="card">
-            <h4>Link Referral Anda:</h4>
-            <input type="text" id="my-ref-link" readonly style="width: 100%; padding: 5px;">
-            <button onclick="copyLink()" style="margin-top:5px;">Salin Link</button>
+        <div id="incoming-area" class="hidden">
+            <h4 style="margin:10px 0;">💰 Rezeki Masuk</h4>
+            <div id="incoming-list"></div>
+        </div>
+
+        <div id="active-area" class="card hidden" style="border:2px solid var(--success);">
+            <h3 style="color:var(--success); text-align:center;">🌊 Arus Aktif!</h3>
+            <p style="text-align:center; margin-bottom:10px;">Link Referral Anda:</p>
+            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center;">
+            <button onclick="copyLink()">Salin Link</button>
+        </div>
+
+        <div id="pending-area" class="hidden">
+            <div class="card" style="background:#fff3cd;">
+                <h3 style="color:#856404;">⚠️ Aktivasi Akun</h3>
+                <p>Transfer <strong>Rp 30.000</strong> ke 4 kawan ini:</p>
+            </div>
+            <div id="transfer-list"></div>
         </div>
     </div>
 
     <script type="module">
-        import { auth, db, storage, onAuthStateChanged, signOut, doc, getDoc, ref, uploadBytes, getDownloadURL } from './app.js';
+        import { auth, db, storage, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, ref, uploadBytes, getDownloadURL, showToast } from './app.js';
 
-        onAuthStateChanged(auth, async (user) => {
+        let currentUserUID = null;
+
+        monitorAuthState(async (user) => {
             if (user) {
+                currentUserUID = user.uid;
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if (snap.exists()) {
                     const data = snap.data();
                     document.getElementById('user-name').innerText = data.nama;
+                    const statusEl = document.getElementById('user-status');
+                    statusEl.innerText = data.status;
+                    statusEl.className = `badge ${data.status === 'ACTIVE' ? 'active' : 'pending'}`;
 
-                    if (data.status === "ACTIVE") {
-                        showActive(user.uid);
-                    } else {
-                        showPending(user.uid, data.uplines);
-                    }
+                    if (data.status === "ACTIVE") showActiveDashboard(user.uid);
+                    else showPendingDashboard(user.uid, data.uplines);
+                    
+                    listenIncoming(user.uid);
                 }
-            } else {
-                window.location.href = "index.html";
-            }
+            } else { window.location.href = "index.html"; }
         });
 
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            signOut(auth).then(() => window.location.href = "index.html");
-        });
+        document.getElementById('btnLogout').addEventListener('click', () => signOut(auth).then(() => window.location.href="index.html"));
 
-        async function showPending(myUID, uplines) {
+        window.copyLink = function() {
+            document.getElementById("my-ref-link").select();
+            document.execCommand("copy");
+            showToast("Link Disalin!", "success");
+        }
+
+        async function showPendingDashboard(myUID, uplines) {
             document.getElementById('pending-area').classList.remove('hidden');
             const list = document.getElementById('transfer-list');
             list.innerHTML = "";
-
             const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
             
+            const q = query(collection(db, "transactions"), where("senderId", "==", myUID));
+            const trxStatus = {};
+            (await getDocs(q)).forEach(doc => trxStatus[doc.data().position] = doc.data().status);
+
             for (let pos of positions) {
-                const uid = uplines[pos];
-                // Ambil data upline
-                const uSnap = await getDoc(doc(db, "users", uid));
-                if(uSnap.exists()) {
-                    const uData = uSnap.data();
-                    const div = document.createElement('div');
-                    div.className = "card";
-                    div.innerHTML = `
-                        <h4>Posisi: ${pos.toUpperCase().replace('_', ' ')}</h4>
-                        <p><strong>${uData.nama}</strong> (${uData.bank})</p>
-                        <p style="background:#eee; padding:5px; font-weight:bold;">${uData.rekening}</p>
-                        
-                        <a href="https://wa.me/${uData.no_wa}?text=Halo%20Kak%20${uData.nama},%20saya%20sudah%20transfer%20Rp30.000%20ke%20BCA%20kakak.%20Mohon%20cek." 
-                           target="_blank" class="btn-wa">
-                           Kirim Bukti via WhatsApp
-                        </a>
-                    `;
-                    list.appendChild(div);
+                const uData = (await getDoc(doc(db, "users", uplines[pos]))).data();
+                const status = trxStatus[pos] || "NONE";
+                
+                let content = '';
+                if(status === "APPROVED") content = `<div class="badge active" style="text-align:center;">LUNAS ✅</div>`;
+                else if(status === "WAITING") content = `<div class="badge pending" style="text-align:center; margin-bottom:5px;">MENUNGGU</div><a href="https://wa.me/${uData.no_wa}" class="btn-wa">Chat WA</a>`;
+                else content = `<input type="file" id="file-${pos}"><button id="btn-${pos}">Upload Bukti</button>`;
+
+                const card = document.createElement('div');
+                card.className = "card";
+                card.innerHTML = `<strong>${pos.toUpperCase().replace('_',' ')}</strong><br>${uData.nama} (${uData.bank})<br><code style="background:#eee; padding:2px 5px;">${uData.rekening}</code><br><br>${content}`;
+                list.appendChild(card);
+
+                if(status === "NONE") {
+                    setTimeout(() => {
+                        document.getElementById(`btn-${pos}`).onclick = async () => {
+                            const f = document.getElementById(`file-${pos}`).files[0];
+                            if(!f) return showToast("Pilih foto!", "error");
+                            showToast("Mengupload...", "info");
+                            const url = await getDownloadURL(await uploadBytes(ref(storage, `struk/${myUID}/${pos}_${Date.now()}.jpg`), f));
+                            await addDoc(collection(db, "transactions"), { senderId: myUID, receiverId: uplines[pos], senderName: document.getElementById('user-name').innerText, amount: 30000, proofUrl: url, position: pos, status: "WAITING", timestamp: new Date() });
+                            showToast("Terkirim!", "success"); setTimeout(()=>location.reload(), 1000);
+                        };
+                    }, 500);
                 }
             }
         }
 
-        function showActive(uid) {
-            document.getElementById('active-area').classList.remove('hidden');
-            const baseUrl = window.location.href.replace('dashboard.html', 'register.html');
-            document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
+        function listenIncoming(myUID) {
+            onSnapshot(query(collection(db, "transactions"), where("receiverId", "==", myUID), where("status", "==", "WAITING")), (snap) => {
+                const area = document.getElementById('incoming-area');
+                const list = document.getElementById('incoming-list');
+                if(!snap.empty) {
+                    area.classList.remove('hidden'); list.innerHTML = "";
+                    snap.forEach(d => {
+                        const t = d.data();
+                        const card = document.createElement('div');
+                        card.className = "card";
+                        card.style = "border-left:5px solid var(--primary);";
+                        card.innerHTML = `<strong>${t.senderName}</strong><br>Rp ${t.amount}<br><a href="${t.proofUrl}" target="_blank">Lihat Bukti</a><br><button onclick="approve('${d.id}','${t.senderId}')" style="margin-top:5px; background:var(--success-gradient);">TERIMA</button>`;
+                        list.appendChild(card);
+                    });
+                } else area.classList.add('hidden');
+            });
         }
 
-        window.copyLink = function() {
-            const copyText = document.getElementById("my-ref-link");
-            copyText.select();
-            document.execCommand("copy");
-            alert("Link tersalin!");
+        window.approve = async (id, sender) => {
+            if(!confirm("Terima dana ini?")) return;
+            await updateDoc(doc(db, "transactions", id), { status: "APPROVED" });
+            const count = (await getDocs(query(collection(db, "transactions"), where("senderId", "==", sender), where("status", "==", "APPROVED")))).size;
+            if(count >= 4) await updateDoc(doc(db, "users", sender), { status: "ACTIVE" });
+            showToast("Berhasil Diterima!", "success");
+        }
+
+        function showActiveDashboard(uid) {
+            document.getElementById('active-area').classList.remove('hidden');
+            document.getElementById('my-ref-link').value = window.location.href.replace('dashboard.html', `register.html?ref=${uid}`);
         }
     </script>
 </body>

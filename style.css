@@ -1,0 +1,106 @@
+/* style.css - ARUS THEME V1.0 */
+:root {
+    --primary: #0072ff; 
+    --primary-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    --secondary: #00c6ff;
+    --success: #00b09b; 
+    --success-gradient: linear-gradient(to right, #00b09b, #96c93d);
+    --danger: #ff5f6d;
+    --dark: #2d3436;
+    --light: #fdfbfb;
+    --shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+body {
+    background: #eef2f3;
+    color: var(--dark);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    font-size: 14px;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--light);
+    min-height: 100vh;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* BRANDING */
+.brand-header { text-align: center; padding: 30px 0 20px; }
+.brand-logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+    display: inline-block;
+}
+.brand-slogan { color: #636e72; font-size: 0.9rem; margin-top: -5px; font-style: italic; }
+
+/* CARD & ELEMENTS */
+.card {
+    background: white; border-radius: 16px; padding: 20px;
+    margin-bottom: 15px; border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+.card:active { transform: scale(0.98); }
+
+input, select, button {
+    width: 100%; padding: 15px; border-radius: 12px;
+    border: 1px solid #dfe6e9; margin-bottom: 10px; font-size: 1rem;
+}
+input:focus { border-color: var(--secondary); outline: none; }
+
+button {
+    background: var(--primary-gradient); color: white;
+    font-weight: 600; border: none; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+}
+button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
+button.btn-danger { background: var(--danger); box-shadow: none; }
+button.btn-wa { background: #25D366; color: white; text-decoration: none; display: block; text-align: center; }
+
+/* UTILS */
+.hidden { display: none; }
+.badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+.badge.active { background: #d4edda; color: #155724; }
+.badge.pending { background: #fff3cd; color: #856404; }
+
+/* LOADING & TOAST */
+#loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 9999;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+}
+.wave-spinner {
+    width: 50px; height: 50px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    animation: pulse 1s infinite ease-in-out;
+}
+@keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
+
+#toast-container {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 10000; width: 90%; max-width: 400px;
+}
+.toast {
+    background: rgba(45, 52, 54, 0.95); color: white; padding: 15px;
+    border-radius: 10px; margin-bottom: 10px; display: flex;
+    justify-content: space-between; align-items: center;
+    backdrop-filter: blur(5px); animation: slideDown 0.4s ease;
+}
+.toast.success { border-left: 5px solid #00b09b; }
+.toast.error { border-left: 5px solid #ff5f6d; }
+@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

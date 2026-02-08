@@ -3,113 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar SGJT</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
-        input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; }
-        button:disabled { background: #ccc; }
-        .error { color: red; font-size: 0.9em; }
-    </style>
+    <title>Daftar ARUS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300c6ff'/%3E%3Cstop offset='100%25' stop-color='%230072ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='32' fill='url(%23a)'/%3E%3Cpath fill='white' d='M32 12c-6.6 0-12 5.4-12 12 0 1.7.3 3.3 1 4.7L32 48l11-19.3c.7-1.4 1-3 1-4.7 0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z'/%3E%3C/svg%3E">
 </head>
 <body>
-    <h2>Bergabung Sekarang</h2>
-    <p>Upline Anda: <strong><span id="upline-name">Memuat...</span></strong></p>
-    
-    <form id="registerForm">
-        <input type="text" id="nama" placeholder="Nama Lengkap" required>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password (Min 6 digit)" required>
-        
-        <label>Bank (Wajib BCA)</label>
-        <select id="bank" disabled><option value="BCA" selected>BCA</option></select>
-        
-        <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
-        <input type="number" id="whatsapp" placeholder="Nomor WhatsApp (628...)" required>
-        
-        <button type="submit" id="btnDaftar" disabled>Daftar & Kunci Posisi</button>
-        <p id="msg" class="error"></p>
-    </form>
+    <div id="loading-overlay"><div class="wave-spinner"></div></div>
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <div class="brand-header">
+            <div class="brand-logo">ARUS 🌊</div>
+            <p>Upline Anda: <strong id="upline-name">Memuat...</strong></p>
+        </div>
+
+        <form id="registerForm" class="card">
+            <input type="text" id="nama" placeholder="Nama Lengkap" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password (Min 6 digit)" required>
+            <select id="bank" disabled><option value="BCA" selected>BCA (Wajib)</option></select>
+            <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
+            <input type="number" id="whatsapp" placeholder="Nomor WhatsApp (628...)" required>
+            <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
+        </form>
+    </div>
 
     <script type="module">
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc } from './app.js';
-
-        const registerForm = document.getElementById('registerForm');
-        const msg = document.getElementById('msg');
-        
-        // Ambil Referral ID dari URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
 
         // Cek Upline
-        async function checkUpline() {
-            if(!refCode) {
-                msg.innerText = "Error: Link tidak valid (Tidak ada Kode Referral).";
-                return;
-            }
-            
+        const refCode = new URLSearchParams(window.location.search).get('ref');
+        monitorAuthState(async (user) => { if(user) window.location.href="dashboard.html"; });
+
+        (async () => {
+            if(!refCode) return showToast("⚠️ Link Referral Wajib Ada!", "error");
             try {
-                const uplineSnap = await getDoc(doc(db, "users", refCode));
-                if (uplineSnap.exists()) {
-                    document.getElementById('upline-name').innerText = uplineSnap.data().nama;
+                const docSnap = await getDoc(doc(db, "users", refCode));
+                if (docSnap.exists()) {
+                    document.getElementById('upline-name').innerText = docSnap.data().nama;
                     document.getElementById('btnDaftar').disabled = false;
-                } else {
-                    msg.innerText = "Kode Referral Salah/Tidak Ditemukan!";
-                }
-            } catch (e) {
-                msg.innerText = "Error Sistem: " + e.message;
-            }
-        }
-        checkUpline();
+                } else { showToast("Kode Upline Salah!", "error"); }
+            } catch (e) { showToast("Error Sistem", "error"); }
+        })();
 
-        // Proses Daftar
-        registerForm.addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const nama = document.getElementById('nama').value;
-            const rek = document.getElementById('rekening').value;
-            const wa = document.getElementById('whatsapp').value;
+            const btn = document.getElementById('btnDaftar');
+            btn.innerText = "Mendaftarkan..."; btn.disabled = true;
 
             try {
-                msg.innerText = "Memproses pendaftaran...";
+                const cred = await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
+                const uplineData = (await getDoc(doc(db, "users", refCode))).data();
                 
-                // 1. Buat Auth
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // 2. Ambil Data Upline
-                const uplineSnap = await getDoc(doc(db, "users", refCode));
-                const uplineData = uplineSnap.data();
-
-                // 3. LOGIKA GESER (SHIFTING)
-                const myUplines = {
+                // LOGIKA SHIFTING
+                const newUplines = {
                     kawan_1: uplineData.uplines.kawan_2,
                     kawan_2: uplineData.uplines.kawan_3,
                     kawan_3: uplineData.uplines.kawan_4,
-                    kawan_4: refCode // Referrer masuk sini
+                    kawan_4: refCode
                 };
 
-                // 4. Simpan Database
-                await setDoc(doc(db, "users", user.uid), {
-                    uid: user.uid,
-                    nama: nama,
-                    email: email,
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    uid: cred.user.uid,
+                    nama: document.getElementById('nama').value,
+                    email: document.getElementById('email').value,
                     bank: "BCA",
-                    rekening: rek,
-                    no_wa: wa,
-                    uplines: myUplines,
+                    rekening: document.getElementById('rekening').value,
+                    no_wa: document.getElementById('whatsapp').value,
+                    uplines: newUplines,
                     status: "PENDING",
                     createdAt: new Date()
                 });
-
-                alert("Berhasil! Silakan Login.");
-                window.location.href = "index.html";
-
-            } catch (error) {
-                console.error(error);
-                msg.innerText = "Gagal: " + error.message;
-            }
+                showToast("Berhasil! Silakan Login", "success");
+                setTimeout(() => window.location.href = "index.html", 2000);
+            } catch (err) { showToast(err.message, "error"); btn.disabled = false; }
         });
     </script>
 </body>
