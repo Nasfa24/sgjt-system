@@ -4,58 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar SGJT</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        .error { color: red; font-size: 0.9em; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Bergabung Sekarang</h2>
-        <p>Upline Anda: <span id="upline-name">Loading...</span></p>
+    <h2>Bergabung Sekarang</h2>
+    <p>Upline Anda: <strong><span id="upline-name">Memuat...</span></strong></p>
+    
+    <form id="registerForm">
+        <input type="text" id="nama" placeholder="Nama Lengkap" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password (Min 6 digit)" required>
         
-        <form id="registerForm">
-            <input type="text" id="nama" placeholder="Nama Lengkap" required><br>
-            <input type="email" id="email" placeholder="Email" required><br>
-            <input type="password" id="password" placeholder="Password" required><br>
-            
-            <label>Bank (Wajib BCA)</label>
-            <select id="bank" disabled>
-                <option value="BCA" selected>BCA</option>
-            </select><br>
-            
-            <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required><br>
-            <input type="number" id="whatsapp" placeholder="Nomor WhatsApp (628...)" required><br>
-            
-            <button type="submit" id="btnDaftar">Daftar & Kunci Posisi</button>
-        </form>
-    </div>
+        <label>Bank (Wajib BCA)</label>
+        <select id="bank" disabled><option value="BCA" selected>BCA</option></select>
+        
+        <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
+        <input type="number" id="whatsapp" placeholder="Nomor WhatsApp (628...)" required>
+        
+        <button type="submit" id="btnDaftar" disabled>Daftar & Kunci Posisi</button>
+        <p id="msg" class="error"></p>
+    </form>
 
     <script type="module">
         import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc } from './app.js';
 
         const registerForm = document.getElementById('registerForm');
+        const msg = document.getElementById('msg');
         
-        // 1. Ambil Referral ID dari URL (contoh: register.html?ref=KODE_UPLINE)
+        // Ambil Referral ID dari URL
         const urlParams = new URLSearchParams(window.location.search);
         const refCode = urlParams.get('ref');
 
-        // Cek Validitas Upline saat halaman dibuka
+        // Cek Upline
         async function checkUpline() {
             if(!refCode) {
-                alert("Anda tidak bisa daftar tanpa Link Referral!");
-                document.getElementById('btnDaftar').disabled = true;
+                msg.innerText = "Error: Link tidak valid (Tidak ada Kode Referral).";
                 return;
             }
             
-            const uplineSnap = await getDoc(doc(db, "users", refCode));
-            if (uplineSnap.exists()) {
-                document.getElementById('upline-name').innerText = uplineSnap.data().nama;
-            } else {
-                alert("Kode Upline Salah!");
-                document.getElementById('btnDaftar').disabled = true;
+            try {
+                const uplineSnap = await getDoc(doc(db, "users", refCode));
+                if (uplineSnap.exists()) {
+                    document.getElementById('upline-name').innerText = uplineSnap.data().nama;
+                    document.getElementById('btnDaftar').disabled = false;
+                } else {
+                    msg.innerText = "Kode Referral Salah/Tidak Ditemukan!";
+                }
+            } catch (e) {
+                msg.innerText = "Error Sistem: " + e.message;
             }
         }
         checkUpline();
 
-        // 2. Logic Pendaftaran
+        // Proses Daftar
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -65,42 +72,43 @@
             const wa = document.getElementById('whatsapp').value;
 
             try {
-                // A. Buat Akun Auth
+                msg.innerText = "Memproses pendaftaran...";
+                
+                // 1. Buat Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // B. Ambil Data Struktur Upline
+                // 2. Ambil Data Upline
                 const uplineSnap = await getDoc(doc(db, "users", refCode));
                 const uplineData = uplineSnap.data();
 
-                // C. ALGORITMA GESER POSISI (SHIFTING)
-                // Upline Data punya: { kawan1: 'A', kawan2: 'B', kawan3: 'C', kawan4: 'D' }
-                // Kita (Member Baru) akan punya:
+                // 3. LOGIKA GESER (SHIFTING)
                 const myUplines = {
-                    kawan_1: uplineData.uplines.kawan_2, // Posisi 2 naik ke 1
-                    kawan_2: uplineData.uplines.kawan_3, // Posisi 3 naik ke 2
-                    kawan_3: uplineData.uplines.kawan_4, // Posisi 4 naik ke 3
-                    kawan_4: refCode // Referrer (Si Pengajak) masuk ke 4
+                    kawan_1: uplineData.uplines.kawan_2,
+                    kawan_2: uplineData.uplines.kawan_3,
+                    kawan_3: uplineData.uplines.kawan_4,
+                    kawan_4: refCode // Referrer masuk sini
                 };
 
-                // D. Simpan ke Database
+                // 4. Simpan Database
                 await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
                     nama: nama,
                     email: email,
                     bank: "BCA",
                     rekening: rek,
-                    whatsapp: wa,
+                    no_wa: wa,
                     uplines: myUplines,
-                    status: "PENDING", // Belum transfer
+                    status: "PENDING",
                     createdAt: new Date()
                 });
 
-                alert("Pendaftaran Berhasil! Silakan Transfer.");
-                window.location.href = "dashboard.html";
+                alert("Berhasil! Silakan Login.");
+                window.location.href = "index.html";
 
             } catch (error) {
                 console.error(error);
-                alert("Error: " + error.message);
+                msg.innerText = "Gagal: " + error.message;
             }
         });
     </script>

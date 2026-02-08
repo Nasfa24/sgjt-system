@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login SGJT</title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; text-align: center; }
+        input { padding: 10px; margin: 5px; width: 80%; max-width: 300px; }
+        button { padding: 10px 20px; background: green; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Login Member</h1>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <button type="submit">Masuk</button>
+    </form>
+    <p id="msg" style="color:red;"></p>
+
+    <script type="module">
+        import { auth, signInWithEmailAndPassword } from './app.js';
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            signInWithEmailAndPassword(auth, email, pass)
+                .then(() => {
+                    window.location.href = "dashboard.html";
+                })
+                .catch((error) => {
+                    document.getElementById('msg').innerText = "Login Gagal: " + error.message;
+                });
+        });
+    </script>
+</body>
+</html>

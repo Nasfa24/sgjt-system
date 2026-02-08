@@ -3,175 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Member - SGJT</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard SGJT</title>
     <style>
-        /* CSS Sederhana khusus Dashboard */
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
         .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: #f9f9f9; }
         .hidden { display: none; }
         .btn-wa { background-color: #25D366; color: white; padding: 10px; text-decoration: none; display: inline-block; margin-top: 5px; border-radius: 5px; }
-        .status-active { color: green; font-weight: bold; border: 2px solid green; padding: 10px; }
-        .status-pending { color: orange; font-weight: bold; }
+        .status-active { color: green; font-weight: bold; border: 2px solid green; padding: 10px; text-align: center;}
+        .status-pending { color: orange; font-weight: bold; text-align: center;}
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Halo, <span id="user-name">Loading...</span></h3>
-            <button id="btnLogout" style="background:red; color:white; border:none; padding:5px;">Logout</button>
-        </div>
-        <hr>
+    <div style="display: flex; justify-content: space-between;">
+        <h3>Halo, <span id="user-name">...</span></h3>
+        <button id="btnLogout">Logout</button>
+    </div>
+    <hr>
 
-        <div id="pending-area" class="hidden">
-            <h4 class="status-pending">⚠️ Status: BELUM AKTIF</h4>
-            <p>Silakan transfer Rp 30.000 ke 4 Kawan di bawah ini untuk mengaktifkan akun Anda.</p>
-            
-            <div id="transfer-list">
-                <p>Memuat data upline...</p>
-            </div>
-        </div>
+    <div id="pending-area" class="hidden">
+        <h4 class="status-pending">⚠️ AKUN BELUM AKTIF</h4>
+        <p>Silakan transfer <strong>Rp 30.000</strong> ke 4 rekening di bawah ini:</p>
+        <div id="transfer-list">Loading...</div>
+    </div>
 
-        <div id="active-area" class="hidden">
-            <div class="status-active">✅ AKUN ANDA AKTIF</div>
-            <p>Selamat! Anda sekarang bisa merekrut member baru.</p>
-            
-            <div class="card">
-                <h4>Link Referral Anda:</h4>
-                <input type="text" id="my-ref-link" readonly style="width: 100%; padding: 5px;">
-                <button onclick="copyLink()">Salin Link</button>
-            </div>
-
-            <div class="card">
-                <h4>Marketing Tools</h4>
-                <p>Gunakan gambar ini untuk promosi:</p>
-                <button>Download Brosur (Coming Soon)</button>
-            </div>
+    <div id="active-area" class="hidden">
+        <div class="status-active">✅ AKUN AKTIF</div>
+        <div class="card">
+            <h4>Link Referral Anda:</h4>
+            <input type="text" id="my-ref-link" readonly style="width: 100%; padding: 5px;">
+            <button onclick="copyLink()" style="margin-top:5px;">Salin Link</button>
         </div>
     </div>
 
     <script type="module">
-        import { auth, db, storage, onAuthStateChanged, signOut, doc, getDoc, ref, uploadBytes, getDownloadURL, updateDoc } from './app.js';
+        import { auth, db, storage, onAuthStateChanged, signOut, doc, getDoc, ref, uploadBytes, getDownloadURL } from './app.js';
 
-        // 1. Cek Login
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Ambil data user dari Firestore
-                const userSnap = await getDoc(doc(db, "users", user.uid));
-                
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) {
+                    const data = snap.data();
                     document.getElementById('user-name').innerText = data.nama;
 
-                    // Cek Status: PENDING atau ACTIVE?
                     if (data.status === "ACTIVE") {
-                        showActiveDashboard(user.uid);
+                        showActive(user.uid);
                     } else {
-                        showPendingDashboard(user.uid, data.uplines);
+                        showPending(user.uid, data.uplines);
                     }
                 }
             } else {
-                // Kalau belum login, tendang ke index.html
                 window.location.href = "index.html";
             }
         });
 
-        // Logout Logic
         document.getElementById('btnLogout').addEventListener('click', () => {
             signOut(auth).then(() => window.location.href = "index.html");
         });
 
-        // FUNGSI TAMPILKAN DASHBOARD PENDING
-        async function showPendingDashboard(myUID, uplines) {
+        async function showPending(myUID, uplines) {
             document.getElementById('pending-area').classList.remove('hidden');
-            const listContainer = document.getElementById('transfer-list');
-            listContainer.innerHTML = ""; // Bersihkan loading
+            const list = document.getElementById('transfer-list');
+            list.innerHTML = "";
 
-            // Loop data upline (kawan_1 s/d kawan_4)
             const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
             
             for (let pos of positions) {
-                const uplineUID = uplines[pos];
-                
-                // Ambil detail upline (Nama, Bank, WA)
-                const uplineSnap = await getDoc(doc(db, "users", uplineUID));
-                
-                if (uplineSnap.exists()) {
-                    const uData = uplineSnap.data();
-                    
-                    // Render Kartu HTML
-                    const card = document.createElement('div');
-                    card.className = "card";
-                    card.innerHTML = `
-                        <h4>Posisi: ${pos.replace('_', ' ').toUpperCase()}</h4>
+                const uid = uplines[pos];
+                // Ambil data upline
+                const uSnap = await getDoc(doc(db, "users", uid));
+                if(uSnap.exists()) {
+                    const uData = uSnap.data();
+                    const div = document.createElement('div');
+                    div.className = "card";
+                    div.innerHTML = `
+                        <h4>Posisi: ${pos.toUpperCase().replace('_', ' ')}</h4>
                         <p><strong>${uData.nama}</strong> (${uData.bank})</p>
-                        <p style="font-size: 1.2em; background: #eee; padding: 5px;">${uData.rekening}</p>
+                        <p style="background:#eee; padding:5px; font-weight:bold;">${uData.rekening}</p>
                         
-                        <div id="action-area-${pos}">
-                            <label>Upload Bukti Transfer:</label><br>
-                            <input type="file" id="file-${pos}" accept="image/*">
-                            <button id="btn-upload-${pos}" style="margin-top:5px;">Upload & Konfirmasi</button>
-                        </div>
-                        
-                        <div id="wa-area-${pos}" class="hidden">
-                            <p style="color:green">✅ Bukti Terkirim!</p>
-                            <a href="https://wa.me/${uData.no_wa}?text=Halo%20Kak%20${uData.nama},%20saya%20sudah%20transfer%20Rp30.000%20ke%20BCA%20kakak.%20Mohon%20cek%20aplikasi." 
-                               target="_blank" class="btn-wa">
-                               HUBUNGI ${uData.nama} via WA
-                            </a>
-                        </div>
+                        <a href="https://wa.me/${uData.no_wa}?text=Halo%20Kak%20${uData.nama},%20saya%20sudah%20transfer%20Rp30.000%20ke%20BCA%20kakak.%20Mohon%20cek." 
+                           target="_blank" class="btn-wa">
+                           Kirim Bukti via WhatsApp
+                        </a>
                     `;
-                    listContainer.appendChild(card);
-
-                    // Tambahkan Event Listener untuk tombol Upload di kartu ini
-                    document.getElementById(`btn-upload-${pos}`).addEventListener('click', async () => {
-                        const fileInput = document.getElementById(`file-${pos}`);
-                        const file = fileInput.files[0];
-                        
-                        if(!file) { alert("Pilih foto struk dulu!"); return; }
-
-                        // 1. Upload ke Firebase Storage
-                        const storageRef = ref(storage, `struk/${myUID}/${pos}.jpg`);
-                        try {
-                            document.getElementById(`btn-upload-${pos}`).innerText = "Uploading...";
-                            await uploadBytes(storageRef, file);
-                            const downloadURL = await getDownloadURL(storageRef);
-
-                            // 2. Simpan URL bukti ke sub-collection transaksi (Opsional) atau flag lokal
-                            // Untuk MVP, kita anggap user jujur dulu, langsung buka tombol WA
-                            
-                            alert("Upload Berhasil! Silakan hubungi Upline.");
-                            document.getElementById(`action-area-${pos}`).classList.add('hidden');
-                            document.getElementById(`wa-area-${pos}`).classList.remove('hidden');
-
-                        } catch (err) {
-                            console.error(err);
-                            alert("Gagal Upload: " + err.message);
-                            document.getElementById(`btn-upload-${pos}`).innerText = "Upload & Konfirmasi";
-                        }
-                    });
+                    list.appendChild(div);
                 }
             }
         }
 
-        // FUNGSI TAMPILKAN DASHBOARD AKTIF
-        function showActiveDashboard(uid) {
+        function showActive(uid) {
             document.getElementById('active-area').classList.remove('hidden');
-            // Generate Link: contoh localhost atau domain asli
-            const baseURL = window.location.origin + window.location.pathname.replace('dashboard.html', 'register.html');
-            const refLink = `${baseURL}?ref=${uid}`;
-            
-            document.getElementById('my-ref-link').value = refLink;
+            const baseUrl = window.location.href.replace('dashboard.html', 'register.html');
+            document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
         }
 
-        // Fungsi Global untuk Copy Link
         window.copyLink = function() {
             const copyText = document.getElementById("my-ref-link");
             copyText.select();
             document.execCommand("copy");
-            alert("Link berhasil disalin!");
+            alert("Link tersalin!");
         }
-
     </script>
 </body>
 </html>
