@@ -37,7 +37,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=final';
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=final5';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
@@ -46,7 +46,8 @@
         (async () => {
             if(!refCode) {
                 document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
-                showToast("⚠️ Link Referral Wajib Ada!", "error");
+                showToast("⚠️ Akses via Halaman Depan!", "error");
+                setTimeout(() => window.location.href = "index.html", 2000); // Lempar balik ke index jika tanpa ref
                 return;
             }
             try {

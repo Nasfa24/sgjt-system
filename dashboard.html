@@ -47,7 +47,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=final';
+        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=final5';
 
         let currentUserUID = null;
         let currentUserName = "";
@@ -91,15 +91,10 @@
             showToast("Link Disalin!", "success");
         }
 
-        // --- UPDATE PENTING: LINK MENGARAH KE ROOT (PANDUAN) ---
         function showActiveDashboard(uid) {
             document.getElementById('active-area').classList.remove('hidden');
-            
-            // Ambil URL dasar (Domain saja)
             let baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
             if(!baseUrl.endsWith('/')) baseUrl += '/';
-            
-            // Hasil: https://arus.fun/?ref=UID
             document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
         }
 
@@ -171,7 +166,6 @@
 
                                     const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer Rp 30.000 ke ${uData.bank} kakak. Mohon dicek & diapprove ya! 🌊`;
                                     window.open(`https://wa.me/${uData.no_wa}?text=${encodeURIComponent(msg)}`, '_blank');
-                                    
                                     location.reload();
                                 };
                             }

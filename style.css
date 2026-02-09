@@ -1,4 +1,4 @@
-/* style.css - ARUS SYSTEM FINAL V4.0 */
+/* style.css - ARUS FINAL V5.0 */
 
 :root {
     --primary: #0072ff; 
@@ -26,7 +26,6 @@ body {
     position: relative; display: flex; flex-direction: column;
 }
 
-/* BRANDING */
 .brand-header { text-align: center; padding: 30px 0 20px; }
 .brand-logo {
     font-size: 2.5rem; font-weight: 800;
@@ -34,7 +33,7 @@ body {
     -webkit-text-fill-color: transparent; letter-spacing: -1px;
 }
 
-/* LANDING PAGE STYLES (NEW) */
+/* LANDING PAGE */
 .guide-card {
     background: white; border-radius: 16px; padding: 25px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
@@ -57,15 +56,13 @@ body {
     display: block; text-decoration: none; margin-top: 20px; text-align: center;
     box-shadow: 0 4px 15px rgba(0,114,255,0.3);
 }
-.btn-start:hover { transform: translateY(-2px); transition: 0.3s; }
 
-/* CARD & INPUTS */
+/* INPUTS */
 .card {
     background: white; border-radius: 16px; padding: 20px;
     margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     border: 1px solid #edf2f7;
 }
-
 input, select, button {
     width: 100%; padding: 15px; border-radius: 12px;
     border: 1px solid #dfe6e9; margin-bottom: 10px; font-size: 1rem;
@@ -73,10 +70,7 @@ input, select, button {
 }
 input:focus, select:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(0,198,255,0.1); }
 input[readonly] { background: #f1f2f6; color: #636e72; cursor: not-allowed; border-color: #ddd; }
-
-/* HILANGKAN SPINNER INPUT NUMBER */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=number] { -moz-appearance: textfield; }
 
 button {
@@ -84,17 +78,13 @@ button {
     font-weight: 600; border: none; cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,114,255,0.3);
 }
-button:active { transform: scale(0.98); }
-button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 .btn-danger { background: var(--danger); box-shadow: none; }
 
-/* UTILS */
 .hidden { display: none !important; }
 .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
 .badge.active { background: #d4edda; color: #155724; }
 .badge.pending { background: #fff3cd; color: #856404; }
 
-/* LOADING SCREEN */
 #loading-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: white; z-index: 9999;
@@ -108,7 +98,6 @@ button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 }
 @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
 
-/* TOAST */
 #toast-container {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     z-index: 10000; width: 90%; max-width: 400px;
@@ -125,16 +114,12 @@ button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 .toast.success { border-left-color: #00b09b; }
 .toast.error { border-left-color: #ff5f6d; }
 .toast.info { border-left-color: #0072ff; }
-.toast-icon { font-size: 1.5rem; }
-@keyframes slideInTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* KARTU KAWAN */
 .kawan-card {
     background: white; border-radius: 16px; overflow: hidden;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;
     border: 1px solid #edf2f7; transition: transform 0.2s;
 }
-.kawan-card:active { transform: scale(0.98); }
 .kawan-header { padding: 15px; color: white; font-weight: 600; display: flex; justify-content: space-between; }
 .kawan-body { padding: 20px; text-align: center; }
 

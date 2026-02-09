@@ -1,10 +1,10 @@
-// app.js - ARUS SYSTEM FINAL V4.0
+// app.js - ARUS SYSTEM FINAL V5.0
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// CONFIG FIREBASE (Ganti jika perlu, tapi ini harusnya sudah benar)
+// CONFIG FIREBASE (ARUS)
 const firebaseConfig = {
   apiKey: "AIzaSyA_vjefpzj1E5INue51iIDce2ef0UVqJxI",
   authDomain: "arus-system.firebaseapp.com",
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// TOAST NOTIFIKASI
+// FITUR TOAST
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;

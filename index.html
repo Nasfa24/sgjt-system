@@ -34,7 +34,7 @@
                 <div>Tunggu di-Approve, dan akunmu siap digunakan! 🚀</div>
             </div>
 
-            <a id="btnLanjut" href="register.html" class="btn-start">
+            <a id="btnLanjut" href="#" class="btn-start">
                 Siap, Gabung Sekarang!
             </a>
 
@@ -49,18 +49,22 @@
     </div>
 
     <script>
-        // SCRIPT PENGOPER ESTAFET
-        // 1. Ambil Kode Referral dari URL Browser (misal: ?ref=ABC)
-        const params = new URLSearchParams(window.location.search);
-        const refCode = params.get('ref');
-        
-        // 2. Targetkan Tombol Gabung
-        const btn = document.getElementById('btnLanjut');
+        // UID OWNER (KAMU)
+        const ADMIN_UID = "BGhwhZaFRgWP7T2IRDbhrmaHuEA3"; 
 
-        // 3. Jika ada kode, tempelkan ke tombol
-        if (refCode) {
-            btn.href = `register.html?ref=${refCode}`;
+        // 1. Cek apakah ada kode referral di URL?
+        const params = new URLSearchParams(window.location.search);
+        let refCode = params.get('ref');
+        
+        // 2. Jika TIDAK ADA (Orang nyasar), otomatis pakai punya Kamu
+        if (!refCode) {
+            console.log("Traffic organik terdeteksi. Auto-ref ke Owner.");
+            refCode = ADMIN_UID;
         }
+
+        // 3. Pasang link ke tombol
+        const btn = document.getElementById('btnLanjut');
+        btn.href = `register.html?ref=${refCode}`;
     </script>
 </body>
 </html>
