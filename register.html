@@ -6,10 +6,71 @@
     <title>Daftar ARUS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 10001;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 400px;
+            border-radius: 16px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center; position: relative;
+            animation: slideUp 0.4s ease;
+        }
+        .step-item {
+            display: flex; align-items: flex-start; text-align: left;
+            margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 10px;
+        }
+        .step-num {
+            background: var(--primary-gradient); color: white;
+            width: 25px; height: 25px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; margin-right: 10px; flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+        .step-text { font-size: 0.9rem; color: #2d3436; }
+        .btn-understand {
+            background: var(--primary-gradient); color: white; border: none;
+            padding: 12px; width: 100%; border-radius: 50px; font-weight: bold;
+            margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
+    </style>
 </head>
 <body>
     <div id="loading-overlay"><div class="wave-spinner"></div></div>
     <div id="toast-container"></div>
+
+    <div id="guideModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color:var(--primary); margin-bottom:5px;">📋 Panduan Daftar</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:20px;">Ikuti langkah ini agar akunmu aktif:</p>
+            
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-text">Isi <strong>Nama, WA, & Rekening BCA</strong> (Wajib BCA agar mudah dicek).</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-text">Transfer <strong>Rp 30.000</strong> ke 4 Rekening Kawan yang muncul di dashboard.</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-text">Klik tombol <strong>"Konfirmasi WA"</strong> untuk kirim bukti transfer.</div>
+            </div>
+            <div class="step-item">
+                <div class="step-num">4</div>
+                <div class="step-text">Tunggu 4 Kawan klik <strong>"Terima"</strong>, akunmu otomatis AKTIF! ✅</div>
+            </div>
+
+            <button class="btn-understand" onclick="closeGuide()">Siap, Saya Mengerti! 🚀</button>
+        </div>
+    </div>
 
     <div class="container">
         <div class="brand-header">
@@ -37,17 +98,27 @@
     </div>
 
     <script type="module">
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
+        // Import ditambahkan ?v=final agar browser memuat ulang script (Anti-Cache)
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=final';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
         monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
 
-        // Cek Kode Referral saat halaman dimuat
+        // --- TAMBAHAN PENTING: FUNGSI TUTUP POPUP ---
+        // Kita tempel ke 'window' supaya tombol HTML bisa melihat fungsi ini
+        window.closeGuide = function() {
+            const modal = document.getElementById('guideModal');
+            if(modal) modal.style.display = 'none';
+        }
+
+        // --- MULAI LOGIKA PAPAPA.HTML (ASLI) ---
         (async () => {
             if(!refCode) {
                 document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
                 showToast("⚠️ Link Referral Wajib Ada!", "error");
+                // Tambahan: Tutup modal otomatis jika link error, biar user sadar
+                window.closeGuide();
                 return;
             }
             try {
@@ -77,19 +148,14 @@
             btn.innerText = "Mendaftarkan..."; btn.disabled = true;
 
             try {
-                // 1. Buat User di Auth
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                
-                // 2. Siapkan Struktur Upline (Default Kosong jika error)
                 let newUplines = { kawan_1: "", kawan_2: "", kawan_3: "", kawan_4: "" };
 
                 try {
-                    // Coba ambil data upline
                     if (refCode) {
                         const uplineSnap = await getDoc(doc(db, "users", refCode));
                         if (uplineSnap.exists()) {
                             const uData = uplineSnap.data();
-                            // Logika Pergeseran
                             newUplines = {
                                 kawan_1: uData.uplines ? uData.uplines.kawan_2 : refCode,
                                 kawan_2: uData.uplines ? uData.uplines.kawan_3 : refCode,
@@ -99,10 +165,9 @@
                         }
                     }
                 } catch (errUpline) {
-                    console.log("Error baca upline, lanjut pakai default: " + errUpline.message);
+                    console.log("Error baca upline: " + errUpline.message);
                 }
 
-                // 3. Simpan ke Database (PENTING: Ini yang sering gagal)
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: nama,
@@ -121,7 +186,6 @@
             } catch (err) { 
                 showToast("Gagal: " + err.message, "error"); 
                 btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
-                // Jika user auth terlanjur dibuat tapi db gagal, user harus didelete manual atau login ulang
             }
         });
     </script>
