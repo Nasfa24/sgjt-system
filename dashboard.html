@@ -56,9 +56,13 @@
         monitorAuthState(async (user) => {
             if (user) {
                 currentUserUID = user.uid;
-                const snap = await getDoc(doc(db, "users", user.uid));
+                
+                // Cek Dokumen Profil
+                const docRef = doc(db, "users", user.uid);
+                const snap = await getDoc(docRef);
                 
                 if (snap.exists()) {
+                    // --- JIKA DATA ADA (NORMAL) ---
                     const data = snap.data();
                     currentUserName = data.nama;
                     document.getElementById('user-name').innerText = data.nama;
@@ -71,6 +75,18 @@
                     else showPendingDashboard(user.uid, data.uplines);
                     
                     listenIncoming(user.uid);
+
+                } else {
+                    // --- JIKA DATA KOSONG (AKUN HANTU) ---
+                    // Ini menangani kasus "Memuat..." selamanya
+                    showToast("⚠️ Data Profil Tidak Ditemukan! Hubungi Admin.", "error");
+                    document.getElementById('user-name').innerText = "Error: Data Hilang";
+                    document.getElementById('user-status').innerText = "ERROR";
+                    
+                    // Opsi: Otomatis Logout setelah 3 detik
+                    setTimeout(() => {
+                        signOut(auth).then(() => window.location.href="index.html");
+                    }, 3000);
                 }
             } else { window.location.href = "index.html"; }
         });
@@ -91,11 +107,10 @@
         async function showPendingDashboard(myUID, uplines) {
             document.getElementById('pending-area').classList.remove('hidden');
             const list = document.getElementById('transfer-list');
-            list.innerHTML = ""; // Bersihkan
+            list.innerHTML = ""; 
             
             const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
             
-            // Cek Transaksi yg sudah dilakukan
             const q = query(collection(db, "transactions"), where("senderId", "==", myUID));
             const trxStatus = {};
             (await getDocs(q)).forEach(doc => trxStatus[doc.data().position] = doc.data().status);
@@ -107,13 +122,11 @@
                     const uData = uSnap.data();
                     const status = trxStatus[pos] || "NONE";
                     
-                    // Tentukan Warna Header
                     let headerClass = "bg-pos-1";
                     if(pos === 'kawan_2') headerClass = "bg-pos-2";
                     if(pos === 'kawan_3') headerClass = "bg-pos-3";
                     if(pos === 'kawan_4') headerClass = "bg-pos-4";
 
-                    // Tentukan Isi Bawah (Tombol/Status)
                     let footerContent = '';
                     if(status === "APPROVED") {
                         footerContent = `<div style="background:#d4edda; color:#155724; padding:10px; border-radius:8px; font-weight:bold;">✅ LUNAS / DITERIMA</div>`;
@@ -126,7 +139,6 @@
                         footerContent = `<button id="btn-${pos}" class="btn-wa">Konfirmasi WhatsApp 💬</button>`;
                     }
 
-                    // Render Kartu HTML
                     const card = document.createElement('div');
                     card.className = "kawan-card";
                     card.innerHTML = `
@@ -145,7 +157,6 @@
                     `;
                     list.appendChild(card);
 
-                    // Event Listener Tombol WA
                     if(status === "NONE") {
                         setTimeout(() => {
                             const btn = document.getElementById(`btn-${pos}`);
@@ -199,7 +210,6 @@
             if(!confirm("Yakin dana sudah masuk?")) return;
             await updateDoc(doc(db, "transactions", trxId), { status: "APPROVED" });
             
-            // Cek Kelunasan Otomatis
             const doneSnap = await getDocs(query(collection(db, "transactions"), where("senderId", "==", senderUID), where("status", "==", "APPROVED")));
             if (doneSnap.size >= 4) {
                 await updateDoc(doc(db, "users", senderUID), { status: "ACTIVE" });
@@ -211,7 +221,6 @@
 
         function showActiveDashboard(uid) {
             document.getElementById('active-area').classList.remove('hidden');
-            // Auto detect domain (arus.fun atau github.io)
             const baseUrl = window.location.href.replace('dashboard.html', 'register.html');
             document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
         }
