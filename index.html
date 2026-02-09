@@ -3,55 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login ARUS</title>
+    <title>Selamat Datang di ARUS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* TAMPILAN KHUSUS LANDING PAGE */
+        body { background: #eef2f3; }
+        .guide-card {
+            background: white; border-radius: 16px; padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
+        }
+        .step-box {
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
+            margin-bottom: 15px; text-align: left; display: flex; align-items: start;
+            border: 1px solid #edf2f7;
+        }
+        .step-num {
+            background: var(--primary-gradient); color: white;
+            width: 25px; height: 25px; border-radius: 50%; flex-shrink: 0;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; margin-right: 15px; font-size: 0.8rem;
+        }
+        .btn-start {
+            background: var(--primary-gradient); color: white;
+            padding: 15px; width: 100%; border-radius: 50px;
+            font-weight: bold; font-size: 1.1rem; border: none;
+            display: block; text-decoration: none; margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+        }
+        .btn-start:hover { transform: scale(1.02); transition: 0.3s; }
+        .login-link {
+            margin-top: 20px; display: block; color: #666; font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-    <div id="loading-overlay"><div class="wave-spinner"></div></div>
-    <div id="toast-container"></div>
-
     <div class="container" style="justify-content:center;">
         <div class="brand-header">
-            <div class="brand-logo">ARUS 🌊</div>
-            <p class="brand-slogan">Alirkan Kebaikan</p>
+            <div class="brand-logo" style="font-size:3rem;">ARUS 🌊</div>
+            <p style="color:#666;">Alirkan Kebaikan, Rezeki Berjalan</p>
         </div>
 
-        <form id="loginForm" class="card">
-            <h3 style="margin-bottom:20px; text-align:center;">Masuk Akun</h3>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit" id="btnLogin">Masuk</button>
-        </form>
+        <div class="guide-card">
+            <h3 style="color:var(--primary); margin-bottom:20px;">📋 Panduan Memulai</h3>
+            
+            <div class="step-box">
+                <div class="step-num">1</div>
+                <div>Siapkan <strong>Nama, WhatsApp, & Rekening BCA</strong>.</div>
+            </div>
+            <div class="step-box">
+                <div class="step-num">2</div>
+                <div>Transfer <strong>Rp 30.000</strong> ke 4 Rekening Kawan yang akan muncul.</div>
+            </div>
+            <div class="step-box">
+                <div class="step-num">3</div>
+                <div>Klik <strong>"Konfirmasi WA"</strong> setelah transfer.</div>
+            </div>
+            <div class="step-box">
+                <div class="step-num">4</div>
+                <div>Tunggu di-Approve, dan akunmu siap digunakan! 🚀</div>
+            </div>
 
-        <p style="text-align:center;">Belum punya akun? <br> Minta link referral ke temanmu.</p>
+            <a id="btnLanjut" href="register.html" class="btn-start">
+                Siap, Daftar Sekarang!
+            </a>
+
+            <a href="login.html" class="login-link">Sudah punya akun? <strong>Masuk di sini</strong></a>
+        </div>
+        
+        <p style="text-align:center; margin-top:30px; color:#b2bec3; font-size:0.8rem;">
+            &copy; 2026 ARUS System. Amanah & Transparan.
+        </p>
     </div>
 
-    <script type="module">
-        import { auth, signInWithEmailAndPassword, showToast, monitorAuthState } from './app.js?v=3.0';
+    <script>
+        // SCRIPT PENGOPER KODE REFERRAL (Tanpa Database = Anti Error)
+        // Mengambil ?ref=KODE dari link index.html dan mengopernya ke register.html
+        
+        const params = new URLSearchParams(window.location.search);
+        const refCode = params.get('ref');
+        const btn = document.getElementById('btnLanjut');
 
-        // Cek jika user sudah login, langsung lempar ke dashboard
-        monitorAuthState((user) => {
-            if (user) window.location.href = "dashboard.html";
-        });
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnLogin');
-            btn.innerText = "Memproses..."; btn.disabled = true;
-
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                showToast("Login Berhasil!", "success");
-                setTimeout(() => window.location.href = "dashboard.html", 1000);
-            } catch (error) {
-                showToast("Email atau Password Salah!", "error");
-                btn.innerText = "Masuk"; btn.disabled = false;
-            }
-        });
+        if (refCode) {
+            btn.href = `register.html?ref=${refCode}`;
+        }
     </script>
 </body>
 </html>
