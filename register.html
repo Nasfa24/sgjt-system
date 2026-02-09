@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar ARUS</title>
-    <link rel="stylesheet" href="style.css"> <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300c6ff'/%3E%3Cstop offset='100%25' stop-color='%230072ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='32' fill='url(%23a)'/%3E%3Cpath fill='white' d='M32 12c-6.6 0-12 5.4-12 12 0 1.7.3 3.3 1 4.7L32 48l11-19.3c.7-1.4 1-3 1-4.7 0-6.6-5.4-12-12-12zm0 18c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="loading-overlay"><div class="wave-spinner"></div></div>
@@ -14,48 +14,54 @@
     <div class="container">
         <div class="brand-header">
             <div class="brand-logo">ARUS 🌊</div>
-            <p>Upline Anda: <strong id="upline-name">Memuat...</strong></p>
+            <p>Upline: <strong id="upline-name" style="color:var(--primary);">Memuat...</strong></p>
         </div>
 
         <form id="registerForm" class="card">
             <input type="text" id="nama" placeholder="Nama Lengkap" required>
-            <input type="email" id="email" placeholder="Email" required>
+            <input type="email" id="email" placeholder="Email Aktif" required>
             <input type="password" id="password" placeholder="Password (Min 6 digit)" required>
             
+            <label style="font-size:0.8rem; margin-left:5px; color:#666;">Info Rekening Penerima Dana:</label>
             <select id="bank">
-                <option value="BCA" selected>BCA</option>
+                <option value="BCA">BCA</option>
                 <option value="BRI">BRI</option>
                 <option value="MANDIRI">MANDIRI</option>
                 <option value="DANA">DANA</option>
                 <option value="GOPAY">GOPAY</option>
+                <option value="OVO">OVO</option>
+                <option value="SHOPEEPAY">SHOPEEPAY</option>
             </select>
-            
             <input type="number" id="rekening" placeholder="Nomor Rekening / E-Wallet" required>
-            <input type="number" id="whatsapp" placeholder="Nomor WhatsApp (628...)" required>
+            <input type="number" id="whatsapp" placeholder="No WhatsApp (628xxxx)" required>
             
             <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
         </form>
         
-        <p style="text-align:center; margin-top:20px; color:#666;">
-            Sudah punya akun? <a href="index.html" style="color:var(--primary); font-weight:bold;">Login</a>
-        </p>
+        <p style="text-align:center;">Sudah punya akun? <a href="index.html" style="font-weight:bold; color:var(--primary);">Login</a></p>
     </div>
 
     <script type="module">
         import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
-        monitorAuthState(async (user) => { if(user) window.location.href="dashboard.html"; });
+        
+        // Redirect jika sudah login
+        monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
 
+        // Cek Kode Referral
         (async () => {
-            if(!refCode) return showToast("⚠️ Link Referral Wajib Ada!", "error");
+            if(!refCode) return showToast("⚠️ Gunakan Link Referral Valid!", "error");
             try {
                 const docSnap = await getDoc(doc(db, "users", refCode));
                 if (docSnap.exists()) {
                     document.getElementById('upline-name').innerText = docSnap.data().nama;
                     document.getElementById('btnDaftar').disabled = false;
-                } else { showToast("Kode Upline Salah!", "error"); }
-            } catch (e) { showToast("Error Sistem: " + e.message, "error"); }
+                } else { 
+                    document.getElementById('upline-name').innerText = "KODE TIDAK VALID";
+                    showToast("Kode Upline Salah!", "error"); 
+                }
+            } catch (e) { showToast("Error Koneksi", "error"); }
         })();
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -65,15 +71,17 @@
 
             try {
                 const cred = await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-                const uplineData = (await getDoc(doc(db, "users", refCode))).data();
                 
+                // Ambil data upline untuk sistem pergeseran
+                const uplineData = (await getDoc(doc(db, "users", refCode))).data();
                 const newUplines = {
                     kawan_1: uplineData.uplines.kawan_2,
                     kawan_2: uplineData.uplines.kawan_3,
                     kawan_3: uplineData.uplines.kawan_4,
-                    kawan_4: refCode
+                    kawan_4: refCode // Posisi 4 diisi oleh Referrer
                 };
 
+                // Simpan Data User Baru
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: document.getElementById('nama').value,
@@ -85,9 +93,13 @@
                     status: "PENDING",
                     createdAt: new Date()
                 });
-                showToast("Berhasil! Silakan Login", "success");
+
+                showToast("Pendaftaran Berhasil!", "success");
                 setTimeout(() => window.location.href = "index.html", 2000);
-            } catch (err) { showToast(err.message, "error"); btn.innerText = "Gabung Sekarang"; btn.disabled = false; }
+            } catch (err) { 
+                showToast(err.message, "error"); 
+                btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
+            }
         });
     </script>
 </body>

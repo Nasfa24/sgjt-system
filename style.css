@@ -1,5 +1,4 @@
-/* style.css - ARUS SYSTEM FINAL FIXED */
-
+/* style.css - ARUS SYSTEM FINAL (FULL) */
 :root {
     --primary: #0072ff; 
     --primary-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
@@ -14,13 +13,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
 
 body {
-    background: #eef2f3;
-    color: var(--dark);
+    background: #eef2f3; color: var(--dark);
     display: flex; justify-content: center; min-height: 100vh;
     font-size: 14px;
 }
 
-/* Container HP */
+/* CONTAINER UTAMA */
 .container {
     width: 100%; max-width: 480px;
     background: var(--light); min-height: 100vh;
@@ -36,24 +34,27 @@ body {
     -webkit-text-fill-color: transparent; letter-spacing: -1px;
 }
 
-/* CARD & INPUTS */
+/* KOTAK PUTIH (CARD) */
 .card {
     background: white; border-radius: 16px; padding: 20px;
     margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #edf2f7;
 }
 
+/* INPUT & TOMBOL */
 input, select, button {
     width: 100%; padding: 15px; border-radius: 12px;
     border: 1px solid #dfe6e9; margin-bottom: 10px; font-size: 1rem;
-    background: white;
+    background: white; outline: none; transition: 0.3s;
 }
-input:focus, select:focus { border-color: var(--secondary); outline: none; }
+input:focus, select:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(0,198,255,0.1); }
 
 button {
     background: var(--primary-gradient); color: white;
     font-weight: 600; border: none; cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,114,255,0.3);
 }
+button:active { transform: scale(0.98); }
 button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 .btn-danger { background: var(--danger); box-shadow: none; }
 
@@ -63,11 +64,12 @@ button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 .badge.active { background: #d4edda; color: #155724; }
 .badge.pending { background: #fff3cd; color: #856404; }
 
-/* LOADING OVERLAY */
+/* LOADING SCREEN */
 #loading-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: white; z-index: 9999;
-    display: flex; justify-content: center; align-items: center;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
 }
 .wave-spinner {
     width: 50px; height: 50px;
@@ -76,7 +78,7 @@ button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 }
 @keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
 
-/* TOAST NOTIFICATION */
+/* NOTIFIKASI MEWAH (TOAST) */
 #toast-container {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     z-index: 10000; width: 90%; max-width: 400px;
@@ -92,24 +94,29 @@ button:disabled { background: #b2bec3; cursor: not-allowed; box-shadow: none; }
 }
 .toast.success { border-left-color: #00b09b; }
 .toast.error { border-left-color: #ff5f6d; }
+.toast.info { border-left-color: #0072ff; }
 .toast-icon { font-size: 1.5rem; }
 @keyframes slideInTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* KARTU KAWAN BARU */
+/* KARTU KAWAN BARU (WARNA-WARNI) */
 .kawan-card {
     background: white; border-radius: 16px; overflow: hidden;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;
-    border: 1px solid #edf2f7;
+    border: 1px solid #edf2f7; transition: transform 0.2s;
 }
+.kawan-card:active { transform: scale(0.98); }
 .kawan-header { padding: 15px; color: white; font-weight: 600; display: flex; justify-content: space-between; }
 .kawan-body { padding: 20px; text-align: center; }
 
-/* Warna Header */
+/* WARNA GRADASI HEADER */
 .bg-pos-1 { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
 .bg-pos-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 .bg-pos-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 .bg-pos-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
 
-.bank-badge { background: rgba(255,255,255,0.25); padding: 5px 10px; border-radius: 15px; font-size: 0.8em; }
-.rekening-box { background: #f8f9fa; border: 2px dashed #ccc; padding: 10px; margin: 10px 0; border-radius: 8px; font-weight: bold; font-family: monospace; }
-.btn-wa { background: #25D366; color: white; padding: 10px; border-radius: 50px; text-decoration: none; display: block; width: 100%; border: none; }
+.bank-badge { background: rgba(255,255,255,0.25); padding: 5px 10px; border-radius: 15px; font-size: 0.8em; backdrop-filter: blur(5px); }
+.rekening-box {
+    background: #f8f9fa; border: 2px dashed #ccc; padding: 10px; margin: 15px 0;
+    border-radius: 8px; font-weight: bold; font-family: monospace; font-size: 1.1rem; color: #2d3436;
+}
+.btn-wa { background: #25D366; color: white; padding: 12px; border-radius: 50px; text-decoration: none; display: block; width: 100%; border: none; font-weight: bold; }

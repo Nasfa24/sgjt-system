@@ -1,40 +1,220 @@
-// --- KODE BARU UNTUK KARTU WARNA-WARNI ---
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ARUS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loading-overlay"><div class="wave-spinner"></div><p style="margin-top:10px; color:#0072ff;">Sinkronisasi...</p></div>
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <div class="brand-header">
+            <div class="brand-logo">ARUS 🌊</div>
+        </div>
+
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <small>Halo,</small>
+                <h3 id="user-name" style="color:var(--primary); margin:0;">Memuat...</h3>
+                <span id="user-status" class="badge">...</span>
+            </div>
+            <button id="btnLogout" class="btn-danger" style="width:auto; padding:8px 15px;">Keluar</button>
+        </div>
+
+        <div id="incoming-area" class="hidden">
+            <h4 style="margin:10px 0;">💰 Konfirmasi Dana Masuk</h4>
+            <div id="incoming-list"></div>
+        </div>
+
+        <div id="active-area" class="card hidden" style="border:2px solid var(--success); text-align:center;">
+            <h3 style="color:var(--success);">🌊 Akun Aktif!</h3>
+            <p>Bagikan rezeki ke temanmu:</p>
+            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px;">
+            <button onclick="copyLink()">Salin Link Referral</button>
+        </div>
+
+        <div id="pending-area" class="hidden">
+            <div class="card" style="background:#fff3cd; border:none;">
+                <h3 style="color:#856404;">⚠️ Aktivasi Akun</h3>
+                <p>Transfer <strong>Rp 30.000</strong> ke 4 Kawan ini. Klik tombol WA untuk konfirmasi.</p>
+            </div>
+            <div id="transfer-list"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js';
+
+        let currentUserUID = null;
+        let currentUserName = "";
+
+        // 1. CEK LOGIN & LOAD DATA
+        monitorAuthState(async (user) => {
+            if (user) {
+                currentUserUID = user.uid;
+                const snap = await getDoc(doc(db, "users", user.uid));
                 
-                // 1. Tentukan Warna Header berdasarkan posisi (1-4)
-                let headerClass = "bg-pos-1"; // Default biru
-                if(pos === 'kawan_2') headerClass = "bg-pos-2";
-                if(pos === 'kawan_3') headerClass = "bg-pos-3";
-                if(pos === 'kawan_4') headerClass = "bg-pos-4";
+                if (snap.exists()) {
+                    const data = snap.data();
+                    currentUserName = data.nama;
+                    document.getElementById('user-name').innerText = data.nama;
+                    
+                    const statusEl = document.getElementById('user-status');
+                    statusEl.innerText = data.status;
+                    statusEl.className = `badge ${data.status === 'ACTIVE' ? 'active' : 'pending'}`;
 
-                // 2. Konten Tombol/Status
-                let footerContent = '';
-                if(status === "APPROVED") {
-                     footerContent = `<div style="background:#d4edda; color:#155724; padding:10px; border-radius:8px; font-weight:bold;">✅ LUNAS / DITERIMA</div>`;
-                } else if(status === "WAITING") {
-                    footerContent = `
-                        <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-weight:bold; margin-bottom:10px;">⏳ MENUNGGU DI-APPROVE</div>
-                        <a href="https://wa.me/${uData.no_wa}" target="_blank" style="text-decoration:none; color:#666; font-size:0.85rem;">Ketuk untuk Chat Ulang 💬</a>
-                    `;
-                } else {
-                    footerContent = `<button id="btn-${pos}" class="btn-wa" style="background:#25D366; border-radius:50px; box-shadow:0 4px 15px rgba(37, 211, 102, 0.4);">Konfirmasi WhatsApp 💬</button>`;
+                    if (data.status === "ACTIVE") showActiveDashboard(user.uid);
+                    else showPendingDashboard(user.uid, data.uplines);
+                    
+                    listenIncoming(user.uid);
                 }
+            } else { window.location.href = "index.html"; }
+        });
 
-                // 3. Buat HTML Kartu Keren
-                const card = document.createElement('div');
-                card.className = "kawan-card"; // Pakai class baru
-                card.innerHTML = `
-                    <div class="kawan-header ${headerClass}">
-                        <span>${pos.replace('kawan_', 'KAWAN ')}</span>
-                        <span class="bank-badge">${uData.bank}</span>
-                    </div>
-                    <div class="kawan-body">
-                        <h4 style="font-size:1.1rem; margin-bottom:5px;">${uData.nama}</h4>
-                        <div class="rekening-box" onclick="navigator.clipboard.writeText('${uData.rekening}'); showToast('No. Rekening Disalin!', 'info')">
-                            ${uData.rekening}
-                            <div style="font-size:0.6rem; color:#b2bec3; font-weight:normal; margin-top:5px;">(Ketuk untuk Salin)</div>
+        // 2. FUNGSI LOGOUT
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href="index.html");
+        });
+
+        // 3. FUNGSI COPY LINK
+        window.copyLink = function() {
+            document.getElementById("my-ref-link").select();
+            document.execCommand("copy");
+            showToast("Link Disalin!", "success");
+        }
+
+        // 4. LOGIKA DASHBOARD PENDING (4 KARTU WARNA-WARNI)
+        async function showPendingDashboard(myUID, uplines) {
+            document.getElementById('pending-area').classList.remove('hidden');
+            const list = document.getElementById('transfer-list');
+            list.innerHTML = ""; // Bersihkan
+            
+            const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
+            
+            // Cek Transaksi yg sudah dilakukan
+            const q = query(collection(db, "transactions"), where("senderId", "==", myUID));
+            const trxStatus = {};
+            (await getDocs(q)).forEach(doc => trxStatus[doc.data().position] = doc.data().status);
+
+            for (let pos of positions) {
+                const uSnap = await getDoc(doc(db, "users", uplines[pos]));
+                
+                if(uSnap.exists()){
+                    const uData = uSnap.data();
+                    const status = trxStatus[pos] || "NONE";
+                    
+                    // Tentukan Warna Header
+                    let headerClass = "bg-pos-1";
+                    if(pos === 'kawan_2') headerClass = "bg-pos-2";
+                    if(pos === 'kawan_3') headerClass = "bg-pos-3";
+                    if(pos === 'kawan_4') headerClass = "bg-pos-4";
+
+                    // Tentukan Isi Bawah (Tombol/Status)
+                    let footerContent = '';
+                    if(status === "APPROVED") {
+                        footerContent = `<div style="background:#d4edda; color:#155724; padding:10px; border-radius:8px; font-weight:bold;">✅ LUNAS / DITERIMA</div>`;
+                    } else if(status === "WAITING") {
+                        footerContent = `
+                            <div style="background:#fff3cd; color:#856404; padding:8px; border-radius:8px; font-weight:bold; margin-bottom:5px;">⏳ MENUNGGU DI-APPROVE</div>
+                            <a href="https://wa.me/${uData.no_wa}" target="_blank" style="text-decoration:none; color:#666; font-size:0.8rem;">Chat Ulang WA 💬</a>
+                        `;
+                    } else {
+                        footerContent = `<button id="btn-${pos}" class="btn-wa">Konfirmasi WhatsApp 💬</button>`;
+                    }
+
+                    // Render Kartu HTML
+                    const card = document.createElement('div');
+                    card.className = "kawan-card";
+                    card.innerHTML = `
+                        <div class="kawan-header ${headerClass}">
+                            <span>${pos.replace('kawan_', 'KAWAN ')}</span>
+                            <span class="bank-badge">${uData.bank}</span>
                         </div>
-                        ${footerContent}
-                    </div>
-                `;
-                list.appendChild(card);
-                // ----------------------------------------
+                        <div class="kawan-body">
+                            <h4 style="font-size:1.1rem; margin-bottom:5px;">${uData.nama}</h4>
+                            <div class="rekening-box" onclick="navigator.clipboard.writeText('${uData.rekening}'); showToast('No Rekening Disalin!', 'info')">
+                                ${uData.rekening}
+                                <div style="font-size:0.6rem; color:#b2bec3; font-weight:normal; margin-top:5px;">(Ketuk untuk Salin)</div>
+                            </div>
+                            ${footerContent}
+                        </div>
+                    `;
+                    list.appendChild(card);
+
+                    // Event Listener Tombol WA
+                    if(status === "NONE") {
+                        setTimeout(() => {
+                            const btn = document.getElementById(`btn-${pos}`);
+                            if(btn) {
+                                btn.onclick = async () => {
+                                    if(!confirm(`Sudah transfer ke ${uData.nama}?`)) return;
+                                    
+                                    await addDoc(collection(db, "transactions"), { 
+                                        senderId: myUID, receiverId: uplines[pos], 
+                                        senderName: currentUserName, amount: 30000, 
+                                        position: pos, status: "WAITING", timestamp: new Date() 
+                                    });
+
+                                    const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer Rp 30.000 ke ${uData.bank} kakak. Mohon dicek & diapprove ya! 🌊`;
+                                    window.open(`https://wa.me/${uData.no_wa}?text=${encodeURIComponent(msg)}`, '_blank');
+                                    
+                                    location.reload();
+                                };
+                            }
+                        }, 500);
+                    }
+                }
+            }
+        }
+
+        // 5. LOGIKA TERIMA DANA (INCOMING)
+        function listenIncoming(myUID) {
+            onSnapshot(query(collection(db, "transactions"), where("receiverId", "==", myUID), where("status", "==", "WAITING")), (snap) => {
+                const area = document.getElementById('incoming-area');
+                const list = document.getElementById('incoming-list');
+                
+                if(!snap.empty) {
+                    area.classList.remove('hidden'); list.innerHTML = "";
+                    snap.forEach(d => {
+                        const trx = d.data();
+                        const div = document.createElement('div');
+                        div.className = "card";
+                        div.style = "border-left:5px solid var(--success); background:#f0fff4;";
+                        div.innerHTML = `
+                            <small>Dana Masuk:</small>
+                            <h4>${trx.senderName}</h4>
+                            <button onclick="approve('${d.id}','${trx.senderId}')" style="margin-top:10px;">✅ TERIMA DANA</button>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else { area.classList.add('hidden'); }
+            });
+        }
+
+        window.approve = async (trxId, senderUID) => {
+            if(!confirm("Yakin dana sudah masuk?")) return;
+            await updateDoc(doc(db, "transactions", trxId), { status: "APPROVED" });
+            
+            // Cek Kelunasan Otomatis
+            const doneSnap = await getDocs(query(collection(db, "transactions"), where("senderId", "==", senderUID), where("status", "==", "APPROVED")));
+            if (doneSnap.size >= 4) {
+                await updateDoc(doc(db, "users", senderUID), { status: "ACTIVE" });
+                showToast("Member Diaktifkan!", "success");
+            } else {
+                showToast("Berhasil Diterima", "success");
+            }
+        }
+
+        function showActiveDashboard(uid) {
+            document.getElementById('active-area').classList.remove('hidden');
+            // Auto detect domain (arus.fun atau github.io)
+            const baseUrl = window.location.href.replace('dashboard.html', 'register.html');
+            document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
+        }
+    </script>
+</body>
+</html>
