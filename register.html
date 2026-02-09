@@ -26,9 +26,7 @@
             <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
 
             <label style="font-weight:600; margin-bottom:5px; display:block;">Info Penerima Dana</label>
-            
             <input type="text" id="bank" value="BCA" readonly style="background:#f1f2f6; font-weight:bold; color:#2d3436;">
-            
             <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
             <input type="number" id="whatsapp" placeholder="No WhatsApp (08xxxx)" required>
             
@@ -43,12 +41,15 @@
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
-        // Redirect jika sudah login
         monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
 
-        // Cek Kode Referral
+        // Cek Kode Referral saat halaman dimuat
         (async () => {
-            if(!refCode) return showToast("⚠️ Gunakan Link Referral Valid!", "error");
+            if(!refCode) {
+                document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
+                showToast("⚠️ Link Referral Wajib Ada!", "error");
+                return;
+            }
             try {
                 const docSnap = await getDoc(doc(db, "users", refCode));
                 if (docSnap.exists()) {
@@ -58,40 +59,55 @@
                     document.getElementById('upline-name').innerText = "KODE TIDAK VALID";
                     showToast("Kode Upline Salah!", "error"); 
                 }
-            } catch (e) { showToast("Error Koneksi", "error"); }
+            } catch (e) { showToast("Gagal memuat Upline", "error"); }
         })();
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnDaftar');
+            
             const nama = document.getElementById('nama').value;
-            const wa = document.getElementById('whatsapp').value;
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
             const rek = document.getElementById('rekening').value;
+            const wa = document.getElementById('whatsapp').value;
 
-            // Validasi Tambahan (Biar aman)
-            if(!wa || !rek || !nama) {
-                showToast("Semua data wajib diisi!", "error");
-                return;
-            }
+            if(!nama || !email || !pass || !rek || !wa) return showToast("Isi semua data!", "error");
 
             btn.innerText = "Mendaftarkan..."; btn.disabled = true;
 
             try {
-                const cred = await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
+                // 1. Buat User di Auth
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
                 
-                const uplineData = (await getDoc(doc(db, "users", refCode))).data();
-                const newUplines = {
-                    kawan_1: uplineData.uplines.kawan_2,
-                    kawan_2: uplineData.uplines.kawan_3,
-                    kawan_3: uplineData.uplines.kawan_4,
-                    kawan_4: refCode
-                };
+                // 2. Siapkan Struktur Upline (Default Kosong jika error)
+                let newUplines = { kawan_1: "", kawan_2: "", kawan_3: "", kawan_4: "" };
 
+                try {
+                    // Coba ambil data upline
+                    if (refCode) {
+                        const uplineSnap = await getDoc(doc(db, "users", refCode));
+                        if (uplineSnap.exists()) {
+                            const uData = uplineSnap.data();
+                            // Logika Pergeseran
+                            newUplines = {
+                                kawan_1: uData.uplines ? uData.uplines.kawan_2 : refCode,
+                                kawan_2: uData.uplines ? uData.uplines.kawan_3 : refCode,
+                                kawan_3: uData.uplines ? uData.uplines.kawan_4 : refCode,
+                                kawan_4: refCode
+                            };
+                        }
+                    }
+                } catch (errUpline) {
+                    console.log("Error baca upline, lanjut pakai default: " + errUpline.message);
+                }
+
+                // 3. Simpan ke Database (PENTING: Ini yang sering gagal)
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: nama,
-                    email: document.getElementById('email').value,
-                    bank: "BCA", // Hardcode BCA
+                    email: email,
+                    bank: "BCA",
                     rekening: rek,
                     no_wa: wa,
                     uplines: newUplines,
@@ -99,11 +115,13 @@
                     createdAt: new Date()
                 });
 
-                showToast("Pendaftaran Berhasil!", "success");
-                setTimeout(() => window.location.href = "index.html", 2000);
+                showToast("Berhasil! Mengalihkan...", "success");
+                setTimeout(() => window.location.href = "dashboard.html", 2000);
+
             } catch (err) { 
-                showToast(err.message, "error"); 
+                showToast("Gagal: " + err.message, "error"); 
                 btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
+                // Jika user auth terlanjur dibuat tapi db gagal, user harus didelete manual atau login ulang
             }
         });
     </script>
