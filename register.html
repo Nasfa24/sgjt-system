@@ -6,71 +6,10 @@
     <title>Daftar ARUS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); z-index: 10001;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px); animation: fadeIn 0.3s ease;
-        }
-        .modal-content {
-            background: white; width: 90%; max-width: 400px;
-            border-radius: 16px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center; position: relative;
-            animation: slideUp 0.4s ease;
-        }
-        .step-item {
-            display: flex; align-items: flex-start; text-align: left;
-            margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 10px;
-        }
-        .step-num {
-            background: var(--primary-gradient); color: white;
-            width: 25px; height: 25px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; margin-right: 10px; flex-shrink: 0;
-            font-size: 0.8rem;
-        }
-        .step-text { font-size: 0.9rem; color: #2d3436; }
-        .btn-understand {
-            background: var(--primary-gradient); color: white; border: none;
-            padding: 12px; width: 100%; border-radius: 50px; font-weight: bold;
-            margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,114,255,0.3);
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
-    </style>
 </head>
 <body>
     <div id="loading-overlay"><div class="wave-spinner"></div></div>
     <div id="toast-container"></div>
-
-    <div id="guideModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="color:var(--primary); margin-bottom:5px;">📋 Panduan Daftar</h3>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:20px;">Ikuti langkah ini agar akunmu aktif:</p>
-            
-            <div class="step-item">
-                <div class="step-num">1</div>
-                <div class="step-text">Isi <strong>Nama, WA, & Rekening BCA</strong> (Wajib BCA agar mudah dicek).</div>
-            </div>
-            <div class="step-item">
-                <div class="step-num">2</div>
-                <div class="step-text">Transfer <strong>Rp 30.000</strong> ke 4 Rekening Kawan yang muncul di dashboard.</div>
-            </div>
-            <div class="step-item">
-                <div class="step-num">3</div>
-                <div class="step-text">Klik tombol <strong>"Konfirmasi WA"</strong> untuk kirim bukti transfer.</div>
-            </div>
-            <div class="step-item">
-                <div class="step-num">4</div>
-                <div class="step-text">Tunggu 4 Kawan klik <strong>"Terima"</strong>, akunmu otomatis AKTIF! ✅</div>
-            </div>
-
-            <button class="btn-understand" onclick="closeGuide()">Siap, Saya Mengerti! 🚀</button>
-        </div>
-    </div>
 
     <div class="container">
         <div class="brand-header">
@@ -98,25 +37,17 @@
     </div>
 
     <script type="module">
-        // Tambahan: ?v=final_papapa untuk mencegah cache error
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=final_papapa';
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
         monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
-
-        // TAMBAHAN: Fungsi untuk menutup Pop Up
-        window.closeGuide = function() {
-            document.getElementById('guideModal').style.display = 'none';
-        }
 
         // Cek Kode Referral saat halaman dimuat
         (async () => {
             if(!refCode) {
                 document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
                 showToast("⚠️ Link Referral Wajib Ada!", "error");
-                // Tambahan: Tutup modal jika link salah
-                document.getElementById('guideModal').style.display = 'none';
                 return;
             }
             try {
