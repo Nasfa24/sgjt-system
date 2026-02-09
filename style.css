@@ -1,4 +1,4 @@
-/* style.css - ARUS SYSTEM V3.0 (FINAL) */
+/* style.css - ARUS SYSTEM FINAL V4.0 */
 
 :root {
     --primary: #0072ff; 
@@ -33,6 +33,31 @@ body {
     background: var(--primary-gradient); -webkit-background-clip: text;
     -webkit-text-fill-color: transparent; letter-spacing: -1px;
 }
+
+/* LANDING PAGE STYLES (NEW) */
+.guide-card {
+    background: white; border-radius: 16px; padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
+}
+.step-box {
+    background: #f8f9fa; border-radius: 12px; padding: 15px;
+    margin-bottom: 15px; display: flex; align-items: flex-start;
+    border: 1px solid #edf2f7;
+}
+.step-num {
+    background: var(--primary-gradient); color: white;
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: bold; margin-right: 15px; font-size: 0.85rem;
+}
+.btn-start {
+    background: var(--primary-gradient); color: white;
+    padding: 15px; width: 100%; border-radius: 50px;
+    font-weight: bold; font-size: 1.1rem; border: none;
+    display: block; text-decoration: none; margin-top: 20px; text-align: center;
+    box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+}
+.btn-start:hover { transform: translateY(-2px); transition: 0.3s; }
 
 /* CARD & INPUTS */
 .card {

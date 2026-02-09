@@ -47,7 +47,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=3.0';
+        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=final';
 
         let currentUserUID = null;
         let currentUserName = "";
@@ -72,13 +72,13 @@
                     listenIncoming(user.uid);
 
                 } else {
-                    showToast("⚠️ Data Profil Tidak Ditemukan! Hubungi Admin.", "error");
+                    showToast("⚠️ Data Profil Tidak Ditemukan!", "error");
                     document.getElementById('user-name').innerText = "Error: Data Hilang";
                     setTimeout(() => {
-                        signOut(auth).then(() => window.location.href="login.html"); // Ubah arah logout ke login.html
+                        signOut(auth).then(() => window.location.href="login.html");
                     }, 3000);
                 }
-            } else { window.location.href = "login.html"; } // Ubah arah redirect ke login.html
+            } else { window.location.href = "login.html"; }
         });
 
         document.getElementById('btnLogout').addEventListener('click', () => {
@@ -91,24 +91,15 @@
             showToast("Link Disalin!", "success");
         }
 
-        // --- INI BAGIAN YANG DIPERBAIKI ---
+        // --- UPDATE PENTING: LINK MENGARAH KE ROOT (PANDUAN) ---
         function showActiveDashboard(uid) {
             document.getElementById('active-area').classList.remove('hidden');
             
-            // Logika Lama (Salah): Link mengarah ke register.html
-            // const baseUrl = window.location.href.replace('dashboard.html', 'register.html');
-            
-            // Logika Baru (Benar): Link mengarah ke Root (Halaman Depan/Panduan)
-            // Kita hapus 'dashboard.html' dari URL sehingga sisa nama domain saja (misal arus.fun/)
-            let baseUrl = window.location.href.replace('dashboard.html', '');
-            
-            // Hapus tanda tanya jika ada sisa query param
-            baseUrl = baseUrl.split('?')[0]; 
-            
-            // Pastikan diakhiri dengan slash biar rapi
+            // Ambil URL dasar (Domain saja)
+            let baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
             if(!baseUrl.endsWith('/')) baseUrl += '/';
-
-            // Hasilnya jadi: https://arus.fun/?ref=UID
+            
+            // Hasil: https://arus.fun/?ref=UID
             document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
         }
 

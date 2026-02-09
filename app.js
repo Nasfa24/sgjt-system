@@ -1,10 +1,10 @@
-// app.js - ARUS SYSTEM V3.0 (FINAL)
+// app.js - ARUS SYSTEM FINAL V4.0
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// CONFIG FIREBASE (ARUS)
+// CONFIG FIREBASE (Ganti jika perlu, tapi ini harusnya sudah benar)
 const firebaseConfig = {
   apiKey: "AIzaSyA_vjefpzj1E5INue51iIDce2ef0UVqJxI",
   authDomain: "arus-system.firebaseapp.com",
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// FITUR TOAST NOTIFIKASI
+// TOAST NOTIFIKASI
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -39,13 +39,13 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// FITUR LOADING
+// LOADING
 function toggleLoading(show) {
     const loader = document.getElementById('loading-overlay');
     if (loader) loader.style.display = show ? 'flex' : 'none';
 }
 
-// LOGIKA AUTH
+// AUTH MONITOR
 function monitorAuthState(callback) {
     onAuthStateChanged(auth, (user) => {
         toggleLoading(false); 

@@ -33,17 +33,16 @@
             <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
         </form>
         
-        <p style="text-align:center;">Sudah punya akun? <a href="index.html" style="font-weight:bold; color:var(--primary);">Login</a></p>
+        <p style="text-align:center;">Sudah punya akun? <a href="login.html" style="font-weight:bold; color:var(--primary);">Login</a></p>
     </div>
 
     <script type="module">
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=final';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
         monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
 
-        // Cek Kode Referral saat halaman dimuat
         (async () => {
             if(!refCode) {
                 document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
@@ -77,19 +76,14 @@
             btn.innerText = "Mendaftarkan..."; btn.disabled = true;
 
             try {
-                // 1. Buat User di Auth
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                
-                // 2. Siapkan Struktur Upline (Default Kosong jika error)
                 let newUplines = { kawan_1: "", kawan_2: "", kawan_3: "", kawan_4: "" };
 
                 try {
-                    // Coba ambil data upline
                     if (refCode) {
                         const uplineSnap = await getDoc(doc(db, "users", refCode));
                         if (uplineSnap.exists()) {
                             const uData = uplineSnap.data();
-                            // Logika Pergeseran
                             newUplines = {
                                 kawan_1: uData.uplines ? uData.uplines.kawan_2 : refCode,
                                 kawan_2: uData.uplines ? uData.uplines.kawan_3 : refCode,
@@ -98,11 +92,8 @@
                             };
                         }
                     }
-                } catch (errUpline) {
-                    console.log("Error baca upline, lanjut pakai default: " + errUpline.message);
-                }
+                } catch (errUpline) { console.log("Error baca upline: " + errUpline.message); }
 
-                // 3. Simpan ke Database (PENTING: Ini yang sering gagal)
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: nama,
@@ -121,7 +112,6 @@
             } catch (err) { 
                 showToast("Gagal: " + err.message, "error"); 
                 btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
-                // Jika user auth terlanjur dibuat tapi db gagal, user harus didelete manual atau login ulang
             }
         });
     </script>

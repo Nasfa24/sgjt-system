@@ -3,39 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Selamat Datang di ARUS</title>
+    <title>Selamat Datang - ARUS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        /* TAMPILAN KHUSUS LANDING PAGE */
-        body { background: #eef2f3; }
-        .guide-card {
-            background: white; border-radius: 16px; padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
-        }
-        .step-box {
-            background: #f8f9fa; border-radius: 12px; padding: 15px;
-            margin-bottom: 15px; text-align: left; display: flex; align-items: start;
-            border: 1px solid #edf2f7;
-        }
-        .step-num {
-            background: var(--primary-gradient); color: white;
-            width: 25px; height: 25px; border-radius: 50%; flex-shrink: 0;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; margin-right: 15px; font-size: 0.8rem;
-        }
-        .btn-start {
-            background: var(--primary-gradient); color: white;
-            padding: 15px; width: 100%; border-radius: 50px;
-            font-weight: bold; font-size: 1.1rem; border: none;
-            display: block; text-decoration: none; margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(0,114,255,0.3);
-        }
-        .btn-start:hover { transform: scale(1.02); transition: 0.3s; }
-        .login-link {
-            margin-top: 20px; display: block; color: #666; font-size: 0.9rem;
-        }
-    </style>
 </head>
 <body>
     <div class="container" style="justify-content:center;">
@@ -45,11 +15,11 @@
         </div>
 
         <div class="guide-card">
-            <h3 style="color:var(--primary); margin-bottom:20px;">📋 Panduan Memulai</h3>
+            <h3 style="color:var(--primary); margin-bottom:20px; text-align:center;">📋 Panduan Memulai</h3>
             
             <div class="step-box">
                 <div class="step-num">1</div>
-                <div>Siapkan <strong>Nama, WhatsApp, & Rekening BCA</strong>.</div>
+                <div>Siapkan data <strong>Nama, WhatsApp, & Rekening BCA</strong>.</div>
             </div>
             <div class="step-box">
                 <div class="step-num">2</div>
@@ -57,7 +27,7 @@
             </div>
             <div class="step-box">
                 <div class="step-num">3</div>
-                <div>Klik <strong>"Konfirmasi WA"</strong> setelah transfer.</div>
+                <div>Klik tombol <strong>"Konfirmasi WA"</strong> setelah transfer.</div>
             </div>
             <div class="step-box">
                 <div class="step-num">4</div>
@@ -65,25 +35,29 @@
             </div>
 
             <a id="btnLanjut" href="register.html" class="btn-start">
-                Siap, Daftar Sekarang!
+                Siap, Gabung Sekarang!
             </a>
 
-            <a href="login.html" class="login-link">Sudah punya akun? <strong>Masuk di sini</strong></a>
+            <div style="text-align:center; margin-top:20px;">
+                <a href="login.html" style="color:#666; font-size:0.9rem; text-decoration:none;">Sudah punya akun? <strong style="color:var(--primary);">Masuk di sini</strong></a>
+            </div>
         </div>
         
         <p style="text-align:center; margin-top:30px; color:#b2bec3; font-size:0.8rem;">
-            &copy; 2026 ARUS System. Amanah & Transparan.
+            &copy; 2026 ARUS System.
         </p>
     </div>
 
     <script>
-        // SCRIPT PENGOPER KODE REFERRAL (Tanpa Database = Anti Error)
-        // Mengambil ?ref=KODE dari link index.html dan mengopernya ke register.html
-        
+        // SCRIPT PENGOPER ESTAFET
+        // 1. Ambil Kode Referral dari URL Browser (misal: ?ref=ABC)
         const params = new URLSearchParams(window.location.search);
         const refCode = params.get('ref');
+        
+        // 2. Targetkan Tombol Gabung
         const btn = document.getElementById('btnLanjut');
 
+        // 3. Jika ada kode, tempelkan ke tombol
         if (refCode) {
             btn.href = `register.html?ref=${refCode}`;
         }
