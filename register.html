@@ -18,22 +18,19 @@
         </div>
 
         <form id="registerForm" class="card">
+            <label style="font-weight:600; margin-bottom:5px; display:block;">Data Diri</label>
             <input type="text" id="nama" placeholder="Nama Lengkap" required>
             <input type="email" id="email" placeholder="Email Aktif" required>
             <input type="password" id="password" placeholder="Password (Min 6 digit)" required>
             
-            <label style="font-size:0.8rem; margin-left:5px; color:#666;">Info Rekening Penerima Dana:</label>
-            <select id="bank">
-                <option value="BCA">BCA</option>
-                <option value="BRI">BRI</option>
-                <option value="MANDIRI">MANDIRI</option>
-                <option value="DANA">DANA</option>
-                <option value="GOPAY">GOPAY</option>
-                <option value="OVO">OVO</option>
-                <option value="SHOPEEPAY">SHOPEEPAY</option>
-            </select>
-            <input type="number" id="rekening" placeholder="Nomor Rekening / E-Wallet" required>
-            <input type="number" id="whatsapp" placeholder="No WhatsApp (628xxxx)" required>
+            <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+
+            <label style="font-weight:600; margin-bottom:5px; display:block;">Info Penerima Dana</label>
+            
+            <input type="text" id="bank" value="BCA" readonly style="background:#f1f2f6; font-weight:bold; color:#2d3436;">
+            
+            <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
+            <input type="number" id="whatsapp" placeholder="No WhatsApp (08xxxx)" required>
             
             <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
         </form>
@@ -67,28 +64,36 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnDaftar');
+            const nama = document.getElementById('nama').value;
+            const wa = document.getElementById('whatsapp').value;
+            const rek = document.getElementById('rekening').value;
+
+            // Validasi Tambahan (Biar aman)
+            if(!wa || !rek || !nama) {
+                showToast("Semua data wajib diisi!", "error");
+                return;
+            }
+
             btn.innerText = "Mendaftarkan..."; btn.disabled = true;
 
             try {
                 const cred = await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
                 
-                // Ambil data upline untuk sistem pergeseran
                 const uplineData = (await getDoc(doc(db, "users", refCode))).data();
                 const newUplines = {
                     kawan_1: uplineData.uplines.kawan_2,
                     kawan_2: uplineData.uplines.kawan_3,
                     kawan_3: uplineData.uplines.kawan_4,
-                    kawan_4: refCode // Posisi 4 diisi oleh Referrer
+                    kawan_4: refCode
                 };
 
-                // Simpan Data User Baru
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
-                    nama: document.getElementById('nama').value,
+                    nama: nama,
                     email: document.getElementById('email').value,
-                    bank: document.getElementById('bank').value,
-                    rekening: document.getElementById('rekening').value,
-                    no_wa: document.getElementById('whatsapp').value,
+                    bank: "BCA", // Hardcode BCA
+                    rekening: rek,
+                    no_wa: wa,
                     uplines: newUplines,
                     status: "PENDING",
                     createdAt: new Date()
