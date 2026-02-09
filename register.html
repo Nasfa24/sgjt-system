@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* CSS KHUSUS UNTUK POPUP PANDUAN */
+        /* CSS POPUP PANDUAN */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6); z-index: 10001;
@@ -98,13 +98,12 @@
     </div>
 
     <script type="module">
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js';
+        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, showToast, monitorAuthState } from './app.js?v=3.0';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
         monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
 
-        // FUNGSI TUTUP POPUP
         window.closeGuide = function() {
             document.getElementById('guideModal').style.display = 'none';
         }
@@ -114,7 +113,6 @@
             if(!refCode) {
                 document.getElementById('upline-name').innerText = "TIDAK ADA (ERROR)";
                 showToast("⚠️ Link Referral Wajib Ada!", "error");
-                // Tutup modal paksa jika link salah, biar dia gak bisa lanjut
                 document.getElementById('guideModal').style.display = 'none';
                 return;
             }

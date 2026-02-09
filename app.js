@@ -1,4 +1,4 @@
-// app.js - ARUS SYSTEM OFFICIAL (FINAL)
+// app.js - ARUS SYSTEM V3.0 (FINAL)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -48,7 +48,7 @@ function toggleLoading(show) {
 // LOGIKA AUTH
 function monitorAuthState(callback) {
     onAuthStateChanged(auth, (user) => {
-        toggleLoading(false); // Matikan loading saat status user ketemu
+        toggleLoading(false); 
         callback(user);
     });
 }

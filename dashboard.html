@@ -47,22 +47,17 @@
     </div>
 
     <script type="module">
-        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js';
+        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=3.0';
 
         let currentUserUID = null;
         let currentUserName = "";
 
-        // 1. CEK LOGIN & LOAD DATA
         monitorAuthState(async (user) => {
             if (user) {
                 currentUserUID = user.uid;
-                
-                // Cek Dokumen Profil
-                const docRef = doc(db, "users", user.uid);
-                const snap = await getDoc(docRef);
+                const snap = await getDoc(doc(db, "users", user.uid));
                 
                 if (snap.exists()) {
-                    // --- JIKA DATA ADA (NORMAL) ---
                     const data = snap.data();
                     currentUserName = data.nama;
                     document.getElementById('user-name').innerText = data.nama;
@@ -77,13 +72,8 @@
                     listenIncoming(user.uid);
 
                 } else {
-                    // --- JIKA DATA KOSONG (AKUN HANTU) ---
-                    // Ini menangani kasus "Memuat..." selamanya
                     showToast("⚠️ Data Profil Tidak Ditemukan! Hubungi Admin.", "error");
                     document.getElementById('user-name').innerText = "Error: Data Hilang";
-                    document.getElementById('user-status').innerText = "ERROR";
-                    
-                    // Opsi: Otomatis Logout setelah 3 detik
                     setTimeout(() => {
                         signOut(auth).then(() => window.location.href="index.html");
                     }, 3000);
@@ -91,19 +81,16 @@
             } else { window.location.href = "index.html"; }
         });
 
-        // 2. FUNGSI LOGOUT
         document.getElementById('btnLogout').addEventListener('click', () => {
             signOut(auth).then(() => window.location.href="index.html");
         });
 
-        // 3. FUNGSI COPY LINK
         window.copyLink = function() {
             document.getElementById("my-ref-link").select();
             document.execCommand("copy");
             showToast("Link Disalin!", "success");
         }
 
-        // 4. LOGIKA DASHBOARD PENDING (4 KARTU WARNA-WARNI)
         async function showPendingDashboard(myUID, uplines) {
             document.getElementById('pending-area').classList.remove('hidden');
             const list = document.getElementById('transfer-list');
@@ -182,7 +169,6 @@
             }
         }
 
-        // 5. LOGIKA TERIMA DANA (INCOMING)
         function listenIncoming(myUID) {
             onSnapshot(query(collection(db, "transactions"), where("receiverId", "==", myUID), where("status", "==", "WAITING")), (snap) => {
                 const area = document.getElementById('incoming-area');
