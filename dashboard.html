@@ -6,10 +6,69 @@
     <title>Dashboard ARUS</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* CSS MODAL CANTIK */
+        .custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 10002;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(4px); animation: fadeIn 0.3s;
+        }
+        .custom-modal {
+            background: white; width: 90%; max-width: 380px;
+            padding: 25px; border-radius: 20px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: scale(0.8); transition: 0.3s;
+            animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-icon {
+            font-size: 3rem; margin-bottom: 15px; display: block;
+            animation: bounce 1s infinite;
+        }
+        .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; }
+        .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 25px; line-height: 1.5; }
+        
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .btn-cancel {
+            background: #dfe6e9; color: #636e72; flex: 1; padding: 12px;
+            border-radius: 50px; border: none; font-weight: bold; cursor: pointer;
+        }
+        .btn-confirm {
+            background: var(--primary-gradient); color: white; flex: 1; padding: 12px;
+            border-radius: 50px; border: none; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+        }
+
+        /* KOTAK PENGINGAT LOGIN */
+        .reminder-box {
+            background: #fff3cd; border-left: 5px solid #ffc107;
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            color: #856404; font-size: 0.9rem; line-height: 1.5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        @keyframes popIn { to { transform: scale(1); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    </style>
 </head>
 <body>
     <div id="loading-overlay"><div class="wave-spinner"></div><p style="margin-top:10px; color:#0072ff;">Sinkronisasi...</p></div>
     <div id="toast-container"></div>
+
+    <div id="confirmModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <span class="modal-icon">🤑</span>
+            <h3 class="modal-title">Terima Dana?</h3>
+            <p class="modal-desc">Pastikan uang <strong>Rp 30.000</strong> benar-benar sudah masuk ke rekeningmu ya!</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Batal</button>
+                <button id="btnRealConfirm" class="btn-confirm">Ya, Masuk!</button>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div class="brand-header">
@@ -26,21 +85,30 @@
         </div>
 
         <div id="incoming-area" class="hidden">
-            <h4 style="margin:10px 0;">💰 Konfirmasi Dana Masuk</h4>
+            <h4 style="margin:10px 0; color:var(--success); animation: pulse 2s infinite;">💰 Ada Dana Masuk!</h4>
             <div id="incoming-list"></div>
         </div>
 
         <div id="active-area" class="card hidden" style="border:2px solid var(--success); text-align:center;">
-            <h3 style="color:var(--success);">🌊 Akun Aktif!</h3>
-            <p>Bagikan rezeki ke temanmu:</p>
-            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px;">
-            <button onclick="copyLink()">Salin Link Referral</button>
+            <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
+            <h3 style="color:var(--success);">Selamat! Akun Aktif</h3>
+            <p>Sekarang giliranmu menerima aliran dana.</p>
+            <p style="font-size:0.85rem; color:#666; margin-top:5px;">Bagikan link ini ke temanmu:</p>
+            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px; border:2px dashed var(--primary);">
+            <button onclick="copyLink()">Salin Link Referral 📋</button>
         </div>
 
         <div id="pending-area" class="hidden">
-            <div class="card" style="background:#fff3cd; border:none;">
-                <h3 style="color:#856404;">⚠️ Aktivasi Akun</h3>
-                <p>Transfer <strong>Rp 30.000</strong> ke 4 Kawan ini. Klik tombol WA untuk konfirmasi.</p>
+            <div class="reminder-box">
+                <strong>📝 PENTING:</strong><br>
+                Setelah konfirmasi WA, Upline akan mengecek transferanmu.<br>
+                Simpan <strong>Email & Password</strong> kamu, lalu cek status aktif secara berkala di: <br>
+                <a href="login.html" style="font-weight:bold; color:#d35400;">arus.fun/login</a>
+            </div>
+
+            <div class="card" style="background:white; border:none;">
+                <h3 style="color:var(--dark);">⚠️ Tugas Aktivasi</h3>
+                <p>Transfer <strong>Rp 30.000</strong> ke 4 Kawan ini agar akunmu aktif.</p>
             </div>
             <div id="transfer-list"></div>
         </div>
@@ -72,11 +140,8 @@
                     listenIncoming(user.uid);
 
                 } else {
-                    showToast("⚠️ Data Profil Tidak Ditemukan!", "error");
-                    document.getElementById('user-name').innerText = "Error: Data Hilang";
-                    setTimeout(() => {
-                        signOut(auth).then(() => window.location.href="login.html");
-                    }, 3000);
+                    showToast("⚠️ Data Profil Error!", "error");
+                    setTimeout(() => { signOut(auth).then(() => window.location.href="login.html"); }, 3000);
                 }
             } else { window.location.href = "login.html"; }
         });
@@ -88,7 +153,18 @@
         window.copyLink = function() {
             document.getElementById("my-ref-link").select();
             document.execCommand("copy");
-            showToast("Link Disalin!", "success");
+            showToast("Link Disalin! Sebarkan Cuan! 💸", "success");
+        }
+
+        window.closeModal = function() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function fireConfetti() {
+            confetti({
+                particleCount: 100, spread: 70, origin: { y: 0.6 },
+                colors: ['#0072ff', '#00c6ff', '#f1c40f', '#e74c3c']
+            });
         }
 
         function showActiveDashboard(uid) {
@@ -96,6 +172,7 @@
             let baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
             if(!baseUrl.endsWith('/')) baseUrl += '/';
             document.getElementById('my-ref-link').value = `${baseUrl}?ref=${uid}`;
+            setTimeout(fireConfetti, 500);
         }
 
         async function showPendingDashboard(myUID, uplines) {
@@ -104,14 +181,12 @@
             list.innerHTML = ""; 
             
             const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
-            
             const q = query(collection(db, "transactions"), where("senderId", "==", myUID));
             const trxStatus = {};
             (await getDocs(q)).forEach(doc => trxStatus[doc.data().position] = doc.data().status);
 
             for (let pos of positions) {
                 const uSnap = await getDoc(doc(db, "users", uplines[pos]));
-                
                 if(uSnap.exists()){
                     const uData = uSnap.data();
                     const status = trxStatus[pos] || "NONE";
@@ -126,8 +201,8 @@
                         footerContent = `<div style="background:#d4edda; color:#155724; padding:10px; border-radius:8px; font-weight:bold;">✅ LUNAS / DITERIMA</div>`;
                     } else if(status === "WAITING") {
                         footerContent = `
-                            <div style="background:#fff3cd; color:#856404; padding:8px; border-radius:8px; font-weight:bold; margin-bottom:5px;">⏳ MENUNGGU DI-APPROVE</div>
-                            <a href="https://wa.me/${uData.no_wa}" target="_blank" style="text-decoration:none; color:#666; font-size:0.8rem;">Chat Ulang WA 💬</a>
+                            <div style="background:#fff3cd; color:#856404; padding:8px; border-radius:8px; font-weight:bold; margin-bottom:5px;">⏳ MENUNGGU KONFIRMASI</div>
+                            <small>Sabar ya, Kawan sedang mengecek...</small>
                         `;
                     } else {
                         footerContent = `<button id="btn-${pos}" class="btn-wa">Konfirmasi WhatsApp 💬</button>`;
@@ -144,7 +219,6 @@
                             <h4 style="font-size:1.1rem; margin-bottom:5px;">${uData.nama}</h4>
                             <div class="rekening-box" onclick="navigator.clipboard.writeText('${uData.rekening}'); showToast('No Rekening Disalin!', 'info')">
                                 ${uData.rekening}
-                                <div style="font-size:0.6rem; color:#b2bec3; font-weight:normal; margin-top:5px;">(Ketuk untuk Salin)</div>
                             </div>
                             ${footerContent}
                         </div>
@@ -156,17 +230,19 @@
                             const btn = document.getElementById(`btn-${pos}`);
                             if(btn) {
                                 btn.onclick = async () => {
-                                    if(!confirm(`Sudah transfer ke ${uData.nama}?`)) return;
+                                    // --- KALIMAT CHAT BARU ---
+                                    const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer ⚠️\nMohon dicek & APPROVE ya! ( Masuk di arus.fun/login )`;
                                     
-                                    await addDoc(collection(db, "transactions"), { 
-                                        senderId: myUID, receiverId: uplines[pos], 
-                                        senderName: currentUserName, amount: 30000, 
-                                        position: pos, status: "WAITING", timestamp: new Date() 
-                                    });
-
-                                    const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer Rp 30.000 ke ${uData.bank} kakak. Mohon dicek & diapprove ya! 🌊`;
                                     window.open(`https://wa.me/${uData.no_wa}?text=${encodeURIComponent(msg)}`, '_blank');
-                                    location.reload();
+                                    
+                                    if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}? Klik OK jika sudah.`)) {
+                                        await addDoc(collection(db, "transactions"), { 
+                                            senderId: myUID, receiverId: uplines[pos], 
+                                            senderName: currentUserName, amount: 30000, 
+                                            position: pos, status: "WAITING", timestamp: new Date() 
+                                        });
+                                        location.reload();
+                                    }
                                 };
                             }
                         }, 500);
@@ -190,7 +266,7 @@
                         div.innerHTML = `
                             <small>Dana Masuk:</small>
                             <h4>${trx.senderName}</h4>
-                            <button onclick="approve('${d.id}','${trx.senderId}')" style="margin-top:10px;">✅ TERIMA DANA</button>
+                            <button onclick="openApproveModal('${d.id}','${trx.senderId}')" style="margin-top:10px; background:var(--success); box-shadow:0 4px 10px rgba(0,176,155,0.3);">✅ TERIMA DANA</button>
                         `;
                         list.appendChild(div);
                     });
@@ -198,18 +274,32 @@
             });
         }
 
-        window.approve = async (trxId, senderUID) => {
-            if(!confirm("Yakin dana sudah masuk?")) return;
-            await updateDoc(doc(db, "transactions", trxId), { status: "APPROVED" });
-            
-            const doneSnap = await getDocs(query(collection(db, "transactions"), where("senderId", "==", senderUID), where("status", "==", "APPROVED")));
-            if (doneSnap.size >= 4) {
-                await updateDoc(doc(db, "users", senderUID), { status: "ACTIVE" });
-                showToast("Member Diaktifkan!", "success");
-            } else {
-                showToast("Berhasil Diterima", "success");
-            }
+        let selectedTrxId = null;
+        let selectedSenderUID = null;
+
+        window.openApproveModal = function(trxId, senderUID) {
+            selectedTrxId = trxId;
+            selectedSenderUID = senderUID;
+            document.getElementById('confirmModal').style.display = 'flex';
         }
+
+        document.getElementById('btnRealConfirm').addEventListener('click', async () => {
+            if(!selectedTrxId) return;
+            document.getElementById('confirmModal').style.display = 'none';
+            showToast("Memproses...", "info");
+
+            await updateDoc(doc(db, "transactions", selectedTrxId), { status: "APPROVED" });
+            
+            const doneSnap = await getDocs(query(collection(db, "transactions"), where("senderId", "==", selectedSenderUID), where("status", "==", "APPROVED")));
+            fireConfetti();
+
+            if (doneSnap.size >= 4) {
+                await updateDoc(doc(db, "users", selectedSenderUID), { status: "ACTIVE" });
+                showToast("MANTAB! Member Resmi Aktif! 🎉", "success");
+            } else {
+                showToast("Dana Diterima! Cuan Bosku! 💸", "success");
+            }
+        });
     </script>
 </body>
 </html>
