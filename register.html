@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* TAMBAHAN: Kotak Peringatan Anti-Fraud */
         .alert-box {
             background: #ffecec; border-left: 4px solid #ff5f6d;
             padding: 15px; border-radius: 8px; margin-bottom: 20px;
@@ -47,9 +46,8 @@
             <label style="font-weight:600; margin-bottom:5px; display:block;">Info Penerima Dana</label>
             
             <input type="text" id="bank" value="BCA" readonly style="background:#f1f2f6; font-weight:bold; color:#2d3436;">
-            
             <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
-            <input type="number" id="whatsapp" placeholder="No WhatsApp (08xxxx)" required>
+            <input type="number" id="whatsapp" placeholder="No WhatsApp (Contoh: 0812xxxx)" required>
             
             <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
         </form>
@@ -62,7 +60,14 @@
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         
-        monitorAuthState((user) => { if(user) window.location.href="dashboard.html"; });
+        // --- 🛡️ FIX RACE CONDITION ---
+        // Variabel kunci untuk menandai sedang proses daftar
+        let isRegistering = false; 
+
+        monitorAuthState((user) => { 
+            // Hanya redirect jika user login DAN BUKAN sedang proses daftar
+            if(user && !isRegistering) window.location.href="dashboard.html"; 
+        });
 
         (async () => {
             if(!refCode) {
@@ -91,30 +96,28 @@
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             const rek = document.getElementById('rekening').value;
-            const wa = document.getElementById('whatsapp').value;
+            let waInput = document.getElementById('whatsapp').value; 
 
-            if(!nama || !email || !pass || !rek || !wa) return showToast("Isi semua data!", "error");
+            if(!nama || !email || !pass || !rek || !waInput) return showToast("Isi semua data!", "error");
+
+            // AUTO-FORMAT WA (+62)
+            let waClean = waInput.replace(/[^0-9]/g, '');
+            if (waClean.startsWith('0')) waClean = '62' + waClean.slice(1);
+            const waFinal = waClean; 
 
             btn.innerText = "Mengecek Data..."; btn.disabled = true;
 
-            try {
-                // --- 🛡️ CEK DATA KEMBAR (DATABASE) ---
-                const usersRef = collection(db, "users");
-                
-                // Cek Rekening
-                const qRek = query(usersRef, where("rekening", "==", rek));
-                const snapRek = await getDocs(qRek);
-                if (!snapRek.empty) {
-                    throw new Error("⛔ GAGAL: Nomor Rekening ini SUDAH TERDAFTAR!");
-                }
+            // --- 🔒 KUNCI PINTU REDIRECT ---
+            isRegistering = true; 
 
-                // Cek WhatsApp
-                const qWA = query(usersRef, where("no_wa", "==", wa));
-                const snapWA = await getDocs(qWA);
-                if (!snapWA.empty) {
-                    throw new Error("⛔ GAGAL: Nomor WhatsApp ini SUDAH TERDAFTAR!");
-                }
-                // ---------------------------------------------
+            try {
+                // CEK DUPLIKAT
+                const usersRef = collection(db, "users");
+                const qRek = query(usersRef, where("rekening", "==", rek));
+                if (!(await getDocs(qRek)).empty) throw new Error("⛔ GAGAL: Nomor Rekening ini SUDAH TERDAFTAR!");
+
+                const qWA = query(usersRef, where("no_wa", "==", waFinal));
+                if (!(await getDocs(qWA)).empty) throw new Error("⛔ GAGAL: Nomor WhatsApp ini SUDAH TERDAFTAR!");
 
                 btn.innerText = "Mendaftarkan...";
 
@@ -136,26 +139,27 @@
                     }
                 } catch (errUpline) { console.log("Error upline"); }
 
+                // SIMPAN KE DATABASE (Tunggu sampai selesai!)
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: nama,
                     email: email,
                     bank: "BCA",
                     rekening: rek,
-                    no_wa: wa,
+                    no_wa: waFinal,
                     uplines: newUplines,
                     status: "PENDING",
                     createdAt: new Date()
                 });
 
+                // SETELAH SELESAI SIMPAN, BARU REDIRECT MANUAL
                 showToast("Berhasil! Mengalihkan...", "success");
                 setTimeout(() => window.location.href = "dashboard.html", 2000);
 
             } catch (err) { 
+                isRegistering = false; // Buka kunci jika error agar bisa coba lagi
                 let msg = err.message;
                 if(msg.includes("email-already-in-use")) msg = "Email sudah terdaftar!";
-                
-                // Tampilkan Error dengan jelas
                 showToast(msg, "error"); 
                 btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
             }
