@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obrolan Grup</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background: #efe7dd; } /* Warna background WA */
+        .container { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 80px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-opacity: 0.1; }
+        .top-bar { background: #075e54; color: white; padding: 15px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 10; }
+        .avatar { width: 40px; height: 40px; background: white; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: #075e54; font-weight: bold; }
+        .chat-box { padding: 20px; flex: 1; }
+        .bubble { background: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; max-width: 85%; box-shadow: 0 1px 1px rgba(0,0,0,0.1); position: relative; font-size: 14px; line-height: 1.4; }
+        .bubble.me { background: #dcf8c6; align-self: flex-end; margin-left: auto; }
+        .name { font-size: 12px; color: #e57373; font-weight: bold; margin-bottom: 3px; display: block; }
+        .time { font-size: 10px; color: #999; float: right; margin-top: 5px; margin-left: 10px; }
+        
+        .sticky-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 440px; z-index: 99; }
+        .btn { display: block; background: #25D366; color: white; text-align: center; padding: 15px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="top-bar">
+        <div class="avatar">G</div>
+        <div>
+            <div style="font-weight: bold;">Grup Pejuang Cuan 💸</div>
+            <div style="font-size: 12px;">Doni, Mas Uuth, +62 812...</div>
+        </div>
+    </div>
+
+    <div class="chat-box">
+        <div class="bubble">
+            <span class="name">Doni (Teman Nongkrong)</span>
+            Bro, seriusan modal 120rb bisa balik? Gue trauma ikut gituan.
+            <span class="time">10:05</span>
+        </div>
+
+        <div class="bubble me">
+            Tenang bro. Ini bukan titip dana ke admin. Lu transfer langsung ke temen sendiri. Admin gak pegang duit lu.
+            <span class="time">10:06</span>
+        </div>
+
+        <div class="bubble">
+            <span class="name">+62 812-xxxx-xxxx</span>
+            Wah iya bener, barusan gue coba transfer 30rb x 4, akun langsung aktif. Tinggal nunggu giliran nih?
+            <span class="time">10:08</span>
+        </div>
+
+        <div class="bubble me">
+            Yoi. Lu tinggal ajak 4 orang, modal lu balik 100%. Habis itu lu kedorong naik, duit ngalir terus dari bawah.
+            <span class="time">10:10</span>
+        </div>
+
+        <div class="bubble">
+            <span class="name">Doni (Teman Nongkrong)</span>
+            Anjay, gas lah kalau gitu. Mumpung gue baru gajian nih. Minta linknya dong!
+            <span class="time">10:11</span>
+        </div>
+
+         <div style="text-align: center; margin: 20px 0; color: #555; font-size: 12px; font-style: italic;">
+            Ingin bergabung ke grup ini?
+        </div>
+    </div>
+</div>
+
+<div class="sticky-btn">
+    <a href="https://wa.me/6283130308537?text=Mas,%20saya%20mau%20gabung%20antrian%20ARUS%20dong.%20Penasaran." class="btn">👉 KLIK SINI BUAT JOIN WHATSAPP</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Cuan ARUS</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background: #222; color: #0f0; margin: 0; padding: 0; }
+        .container { max-width: 480px; margin: 0 auto; background: #000; min-height: 100vh; padding: 20px; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
+        .screen { background: #111; border: 2px solid #0f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: right; }
+        .label { font-size: 14px; color: #888; text-align: left; display: block; margin-bottom: 5px; font-family: sans-serif; }
+        .value { font-size: 32px; font-weight: bold; color: #fff; }
+        .result { color: #0f0; font-size: 40px; text-shadow: 0 0 10px #0f0; }
+        .btn-wa { display: block; background: #25D366; color: white; padding: 15px; text-align: center; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 18px; border-radius: 50px; margin-top: 30px; animation: pulse 2s infinite; }
+        .note { color: #aaa; font-family: sans-serif; font-size: 12px; margin-top: 20px; text-align: center; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align: center; font-family: sans-serif; color: white;">SIMULASI ARUS 🌊</h2>
+        
+        <div class="screen">
+            <span class="label">MODAL AWAL (Sekali Seumur Hidup):</span>
+            <div class="value" style="color: #ff5252;">Rp 120.000</div>
+        </div>
+
+        <div style="text-align: center; font-size: 24px; margin: 10px;">⬇️ DIPUTAR ⬇️</div>
+
+        <div class="screen">
+            <span class="label">HASIL PUTARAN PERTAMA (Ajak 4 Teman):</span>
+            <div class="value">Rp 120.000</div>
+            <span class="label" style="font-size: 10px; color: #25D366;">(MODAL SUDAH KEMBALI 100%)</span>
+        </div>
+
+        <div class="screen">
+            <span class="label">POTENSI HASIL AKHIR (Level 1):</span>
+            <div class="result">Rp 7.680.000</div>
+        </div>
+
+        <p class="note">
+            "Matematikanya gak bohong. Sistem Gotong Royong Digital ini bekerja otomatis. Admin TIDAK pegang uangmu."
+        </p>
+
+        <a href="https://wa.me/6283130308537?text=Mas%20Uuth,%20saya%20mau%20aktifkan%20mesin%20penghasil%207%20Juta%20ini.%20Caranya?" class="btn-wa">👉 AKTIFKAN MESINNYA SEKARANG</a>
+    </div>
+</body>
+</html>
