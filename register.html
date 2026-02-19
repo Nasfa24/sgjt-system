@@ -14,6 +14,10 @@
             display: flex; align-items: start;
         }
         .alert-icon { font-size: 1.2rem; margin-right: 10px; }
+        
+        /* Style khusus untuk Dropdown Bank */
+        select optgroup { font-weight: bold; color: #666; }
+        select option { font-weight: normal; color: #333; }
     </style>
 </head>
 <body>
@@ -32,7 +36,7 @@
                 <div class="alert-icon">⚠️</div>
                 <div>
                     <strong>PERHATIAN: Kebijakan Anti-Fraud</strong><br>
-                    1 Nomor Rekening & WhatsApp hanya berlaku untuk <strong>1 Akun</strong>. Sistem otomatis memblokir data ganda.
+                    1 Nomor Rekening / E-Wallet dan WhatsApp hanya berlaku untuk <strong>1 Akun</strong>. Sistem otomatis memblokir data ganda.
                 </div>
             </div>
 
@@ -45,8 +49,24 @@
 
             <label style="font-weight:600; margin-bottom:5px; display:block;">Info Penerima Dana</label>
             
-            <input type="text" id="bank" value="BCA" readonly style="background:#f1f2f6; font-weight:bold; color:#2d3436;">
-            <input type="number" id="rekening" placeholder="Nomor Rekening BCA" required>
+            <select id="bank" required style="font-weight:bold; color:var(--dark);">
+                <option value="" disabled selected>-- Pilih Bank / E-Wallet --</option>
+                <optgroup label="💳 Transfer Bank">
+                    <option value="BCA">BCA</option>
+                    <option value="BRI">BRI</option>
+                    <option value="MANDIRI">Mandiri</option>
+                    <option value="BNI">BNI</option>
+                    <option value="BSI">BSI</option>
+                </optgroup>
+                <optgroup label="📱 E-Wallet">
+                    <option value="DANA">DANA</option>
+                    <option value="GOPAY">GoPay</option>
+                    <option value="OVO">OVO</option>
+                    <option value="SHOPEEPAY">ShopeePay</option>
+                </optgroup>
+            </select>
+            
+            <input type="number" id="rekening" placeholder="No. Rekening / No. E-Wallet" required>
             <input type="number" id="whatsapp" placeholder="No WhatsApp (Contoh: 0812xxxx)" required>
             
             <button type="submit" id="btnDaftar" disabled>Gabung Sekarang</button>
@@ -59,13 +79,9 @@
         import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, collection, query, where, getDocs, showToast, monitorAuthState } from './app.js?v=final5';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
-        
-        // --- 🛡️ FIX RACE CONDITION ---
-        // Variabel kunci untuk menandai sedang proses daftar
         let isRegistering = false; 
 
         monitorAuthState((user) => { 
-            // Hanya redirect jika user login DAN BUKAN sedang proses daftar
             if(user && !isRegistering) window.location.href="dashboard.html"; 
         });
 
@@ -95,26 +111,24 @@
             const nama = document.getElementById('nama').value;
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
+            const bank = document.getElementById('bank').value; // Ambil nilai Bank
             const rek = document.getElementById('rekening').value;
             let waInput = document.getElementById('whatsapp').value; 
 
-            if(!nama || !email || !pass || !rek || !waInput) return showToast("Isi semua data!", "error");
+            if(!nama || !email || !pass || !bank || !rek || !waInput) return showToast("Isi semua data!", "error");
 
-            // AUTO-FORMAT WA (+62)
             let waClean = waInput.replace(/[^0-9]/g, '');
             if (waClean.startsWith('0')) waClean = '62' + waClean.slice(1);
             const waFinal = waClean; 
 
             btn.innerText = "Mengecek Data..."; btn.disabled = true;
-
-            // --- 🔒 KUNCI PINTU REDIRECT ---
             isRegistering = true; 
 
             try {
-                // CEK DUPLIKAT
+                // TETAP CEK DUPLIKAT (ANTI-TUYUL AKTIF)
                 const usersRef = collection(db, "users");
                 const qRek = query(usersRef, where("rekening", "==", rek));
-                if (!(await getDocs(qRek)).empty) throw new Error("⛔ GAGAL: Nomor Rekening ini SUDAH TERDAFTAR!");
+                if (!(await getDocs(qRek)).empty) throw new Error("⛔ GAGAL: Nomor Rekening/E-Wallet ini SUDAH TERDAFTAR!");
 
                 const qWA = query(usersRef, where("no_wa", "==", waFinal));
                 if (!(await getDocs(qWA)).empty) throw new Error("⛔ GAGAL: Nomor WhatsApp ini SUDAH TERDAFTAR!");
@@ -139,12 +153,12 @@
                     }
                 } catch (errUpline) { console.log("Error upline"); }
 
-                // SIMPAN KE DATABASE (Tunggu sampai selesai!)
+                // SIMPAN DATA LENGKAP KE DATABASE
                 await setDoc(doc(db, "users", cred.user.uid), {
                     uid: cred.user.uid,
                     nama: nama,
                     email: email,
-                    bank: "BCA",
+                    bank: bank, // <-- MENYIMPAN BANK PILIHAN MEMBER
                     rekening: rek,
                     no_wa: waFinal,
                     uplines: newUplines,
@@ -152,12 +166,11 @@
                     createdAt: new Date()
                 });
 
-                // SETELAH SELESAI SIMPAN, BARU REDIRECT MANUAL
                 showToast("Berhasil! Mengalihkan...", "success");
                 setTimeout(() => window.location.href = "dashboard.html", 2000);
 
             } catch (err) { 
-                isRegistering = false; // Buka kunci jika error agar bisa coba lagi
+                isRegistering = false; 
                 let msg = err.message;
                 if(msg.includes("email-already-in-use")) msg = "Email sudah terdaftar!";
                 showToast(msg, "error"); 
