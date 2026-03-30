@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selamat Datang - ARUS</title>
+    
+    <!-- === TAMBAHAN UNTUK PWA === -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#25d366">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- ========================== -->
+
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -128,6 +135,20 @@
         // 3. Pasang link ke tombol
         const btn = document.getElementById('btnLanjut');
         btn.href = `register.html?ref=${refCode}`;
+
+        // === TAMBAHAN UNTUK PWA: REGISTRASI SERVICE WORKER ===
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker berhasil didaftarkan! Scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker gagal didaftarkan: ', err);
+                    });
+            });
+        }
+        // =====================================================
     </script>
 </body>
 </html>
