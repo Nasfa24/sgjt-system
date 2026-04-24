@@ -35,7 +35,7 @@
     </div>
 
     <script type="module">
-        import { auth, signInWithEmailAndPassword, showToast, monitorAuthState } from './app.js?v=final5';
+        import { supabase, showToast, monitorAuthState } from './app.js';
 
         monitorAuthState((user) => {
             if (user) window.location.href = "dashboard.html";
@@ -49,13 +49,18 @@
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
 
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                showToast("Login Berhasil!", "success");
-                setTimeout(() => window.location.href = "dashboard.html", 1000);
-            } catch (error) {
+            // SUPABASE LOGIN
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: pass,
+            });
+
+            if (error) {
                 showToast("Email atau Password Salah!", "error");
                 btn.innerText = "Masuk Sekarang"; btn.disabled = false;
+            } else {
+                showToast("Login Berhasil!", "success");
+                setTimeout(() => window.location.href = "dashboard.html", 1000);
             }
         });
     </script>

@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        /* CSS MODAL CANTIK */
         .custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6); z-index: 10002;
@@ -28,32 +27,20 @@
             transform: scale(0.8); transition: 0.3s;
             animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .modal-icon {
-            font-size: 3rem; margin-bottom: 15px; display: block;
-            animation: bounce 1s infinite;
-        }
+        .modal-icon { font-size: 3rem; margin-bottom: 15px; display: block; animation: bounce 1s infinite; }
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; }
         .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 25px; line-height: 1.5; }
         
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
-        .btn-cancel {
-            background: #dfe6e9; color: #636e72; flex: 1; padding: 12px;
-            border-radius: 50px; border: none; font-weight: bold; cursor: pointer;
-        }
-        .btn-confirm {
-            background: var(--primary-gradient); color: white; flex: 1; padding: 12px;
-            border-radius: 50px; border: none; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,114,255,0.3);
-        }
+        .btn-cancel { background: #dfe6e9; color: #636e72; flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-confirm { background: var(--primary-gradient); color: white; flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,114,255,0.3); }
 
-        /* KOTAK PENGINGAT LOGIN */
         .reminder-box {
             background: #fff3cd; border-left: 5px solid #ffc107;
             padding: 15px; border-radius: 8px; margin-bottom: 20px;
             color: #856404; font-size: 0.9rem; line-height: 1.5;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-
         @keyframes popIn { to { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
@@ -119,18 +106,19 @@
     </div>
 
     <script type="module">
-        import { auth, db, monitorAuthState, signOut, doc, getDoc, updateDoc, collection, query, where, onSnapshot, addDoc, getDocs, showToast } from './app.js?v=final5';
+        import { supabase, monitorAuthState, showToast } from './app.js';
 
         let currentUserUID = null;
         let currentUserName = "";
 
         monitorAuthState(async (user) => {
             if (user) {
-                currentUserUID = user.uid;
-                const snap = await getDoc(doc(db, "users", user.uid));
+                currentUserUID = user.id;
                 
-                if (snap.exists()) {
-                    const data = snap.data();
+                // SUPABASE: Get User Profile
+                const { data, error } = await supabase.from('users').select('*').eq('id', currentUserUID).single();
+                
+                if (data) {
                     currentUserName = data.nama;
                     document.getElementById('user-name').innerText = data.nama;
                     
@@ -138,20 +126,24 @@
                     statusEl.innerText = data.status;
                     statusEl.className = `badge ${data.status === 'ACTIVE' ? 'active' : 'pending'}`;
 
-                    if (data.status === "ACTIVE") showActiveDashboard(user.uid);
-                    else showPendingDashboard(user.uid, data.uplines);
+                    if (data.status === "ACTIVE") showActiveDashboard(currentUserUID);
+                    else {
+                        const uplines = { kawan_1: data.kawan_1, kawan_2: data.kawan_2, kawan_3: data.kawan_3, kawan_4: data.kawan_4 };
+                        showPendingDashboard(currentUserUID, uplines);
+                    }
                     
-                    listenIncoming(user.uid);
+                    listenIncoming(currentUserUID);
 
                 } else {
                     showToast("⚠️ Data Profil Error!", "error");
-                    setTimeout(() => { signOut(auth).then(() => window.location.href="login.html"); }, 3000);
+                    setTimeout(() => { supabase.auth.signOut().then(() => window.location.href="login.html"); }, 3000);
                 }
             } else { window.location.href = "login.html"; }
         });
 
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            signOut(auth).then(() => window.location.href="login.html");
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href="login.html";
         });
 
         window.copyLink = function() {
@@ -160,15 +152,10 @@
             showToast("Link Disalin! Sebarkan Cuan! 💸", "success");
         }
 
-        window.closeModal = function() {
-            document.getElementById('confirmModal').style.display = 'none';
-        }
+        window.closeModal = function() { document.getElementById('confirmModal').style.display = 'none'; }
 
         function fireConfetti() {
-            confetti({
-                particleCount: 100, spread: 70, origin: { y: 0.6 },
-                colors: ['#0072ff', '#00c6ff', '#f1c40f', '#e74c3c']
-            });
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#0072ff', '#00c6ff', '#f1c40f', '#e74c3c'] });
         }
 
         function showActiveDashboard(uid) {
@@ -185,20 +172,21 @@
             list.innerHTML = ""; 
             
             const positions = ['kawan_1', 'kawan_2', 'kawan_3', 'kawan_4'];
-            const q = query(collection(db, "transactions"), where("senderId", "==", myUID));
+            
+            // SUPABASE: Get current user's outgoing transactions
+            const { data: trxData } = await supabase.from('transactions').select('position, status').eq('sender_id', myUID);
             const trxStatus = {};
-            (await getDocs(q)).forEach(doc => trxStatus[doc.data().position] = doc.data().status);
+            if(trxData) trxData.forEach(d => trxStatus[d.position] = d.status);
 
             for (let pos of positions) {
-                const uSnap = await getDoc(doc(db, "users", uplines[pos]));
-                if(uSnap.exists()){
-                    const uData = uSnap.data();
+                if(!uplines[pos]) continue;
+
+                // Get upline profile
+                const { data: uData } = await supabase.from('users').select('*').eq('id', uplines[pos]).single();
+                if(uData){
                     const status = trxStatus[pos] || "NONE";
                     
-                    let headerClass = "bg-pos-1";
-                    if(pos === 'kawan_2') headerClass = "bg-pos-2";
-                    if(pos === 'kawan_3') headerClass = "bg-pos-3";
-                    if(pos === 'kawan_4') headerClass = "bg-pos-4";
+                    let headerClass = pos === 'kawan_1' ? 'bg-pos-1' : pos === 'kawan_2' ? 'bg-pos-2' : pos === 'kawan_3' ? 'bg-pos-3' : 'bg-pos-4';
 
                     let footerContent = '';
                     if(status === "APPROVED") {
@@ -229,6 +217,7 @@
                     `;
                     list.appendChild(card);
 
+                    // WA Button Logic (if needed as fallback)
                     if(status === "NONE") {
                         setTimeout(() => {
                             const btn = document.getElementById(`btn-${pos}`);
@@ -236,23 +225,18 @@
                                 btn.onclick = async () => {
                                     const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer ⚠️\nMohon dicek & APPROVE ya! ( Masuk di arus.fun/login )`;
                                     
-                                    // --- MULAI TAMBAHAN MILA: FILTER NOMOR WA OTOMATIS ---
                                     let waUpline = uData.no_wa || "";
                                     waUpline = waUpline.toString().replace(/[^0-9]/g, ''); 
-                                    if (waUpline.startsWith('0')) {
-                                        waUpline = '62' + waUpline.substring(1);
-                                    } else if (!waUpline.startsWith('62')) {
-                                        waUpline = '62' + waUpline; 
-                                    }
-                                    // --- AKHIR TAMBAHAN MILA ---
+                                    if (waUpline.startsWith('0')) waUpline = '62' + waUpline.substring(1);
+                                    else if (!waUpline.startsWith('62')) waUpline = '62' + waUpline; 
 
                                     window.open(`https://wa.me/${waUpline}?text=${encodeURIComponent(msg)}`, '_blank');
                                     
                                     if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}? Klik OK jika sudah.`)) {
-                                        await addDoc(collection(db, "transactions"), { 
-                                            senderId: myUID, receiverId: uplines[pos], 
-                                            senderName: currentUserName, amount: 30000, 
-                                            position: pos, status: "WAITING", timestamp: new Date() 
+                                        await supabase.from('transactions').insert({ 
+                                            sender_id: myUID, receiver_id: uplines[pos], 
+                                            sender_name: currentUserName, amount: 30000, 
+                                            position: pos, status: "WAITING"
                                         });
                                         location.reload();
                                     }
@@ -264,27 +248,35 @@
             }
         }
 
-        function listenIncoming(myUID) {
-            onSnapshot(query(collection(db, "transactions"), where("receiverId", "==", myUID), where("status", "==", "WAITING")), (snap) => {
+        // SUPABASE: REALTIME LISTENER
+        async function listenIncoming(myUID) {
+            const fetchIncoming = async () => {
+                const { data } = await supabase.from('transactions').select('*').eq('receiver_id', myUID).eq('status', 'WAITING');
                 const area = document.getElementById('incoming-area');
                 const list = document.getElementById('incoming-list');
                 
-                if(!snap.empty) {
+                if(data && data.length > 0) {
                     area.classList.remove('hidden'); list.innerHTML = "";
-                    snap.forEach(d => {
-                        const trx = d.data();
+                    data.forEach(trx => {
                         const div = document.createElement('div');
                         div.className = "card";
                         div.style = "border-left:5px solid var(--success); background:#f0fff4;";
                         div.innerHTML = `
                             <small>Dana Masuk:</small>
-                            <h4>${trx.senderName}</h4>
-                            <button onclick="openApproveModal('${d.id}','${trx.senderId}')" style="margin-top:10px; background:var(--success); box-shadow:0 4px 10px rgba(0,176,155,0.3);">✅ TERIMA DANA</button>
+                            <h4>${trx.sender_name}</h4>
+                            <button onclick="openApproveModal('${trx.id}','${trx.sender_id}')" style="margin-top:10px; background:var(--success); box-shadow:0 4px 10px rgba(0,176,155,0.3);">✅ TERIMA DANA</button>
                         `;
                         list.appendChild(div);
                     });
                 } else { area.classList.add('hidden'); }
-            });
+            };
+
+            await fetchIncoming(); // Run initial fetch
+
+            // Subscribe to realtime changes
+            supabase.channel('custom-all-channel')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `receiver_id=eq.${myUID}` }, fetchIncoming)
+                .subscribe();
         }
 
         let selectedTrxId = null;
@@ -302,20 +294,18 @@
             showToast("Sedang memverifikasi...", "info");
 
             try {
-                // 1. Update status transaksi menjadi APPROVED
-                await updateDoc(doc(db, "transactions", selectedTrxId), { status: "APPROVED" });
+                // 1. SUPABASE: Update transaction status
+                await supabase.from('transactions').update({ status: 'APPROVED' }).eq('id', selectedTrxId);
                 
-                // 2. Cek apakah ini transaksi ke-4 yang di-approve untuk si pengirim?
-                const q = query(
-                    collection(db, "transactions"), 
-                    where("senderId", "==", selectedSenderUID), 
-                    where("status", "==", "APPROVED")
-                );
-                const doneSnap = await getDocs(q);
+                // 2. SUPABASE: Cek jumlah approved sender
+                const { count } = await supabase.from('transactions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('sender_id', selectedSenderUID)
+                    .eq('status', 'APPROVED');
 
-                // 3. Jika sudah 4, barulah update status User tersebut menjadi ACTIVE
-                if (doneSnap.size >= 4) {
-                    await updateDoc(doc(db, "users", selectedSenderUID), { status: "ACTIVE" });
+                // 3. Jika sudah 4, update status User menjadi ACTIVE
+                if (count >= 4) {
+                    await supabase.from('users').update({ status: 'ACTIVE' }).eq('id', selectedSenderUID);
                     showToast("MANTAB! Member Resmi Aktif! 🎉", "success");
                     fireConfetti();
                 } else {

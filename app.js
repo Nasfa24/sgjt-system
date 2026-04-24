@@ -1,36 +1,21 @@
-// app.js - ARUS SYSTEM FINAL V5.0
+// app.js - ARUS SYSTEM SUPABASE V1.0
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// CONFIG FIREBASE (ARUS)
-const firebaseConfig = {
-  apiKey: "AIzaSyA_vjefpzj1E5INue51iIDce2ef0UVqJxI",
-  authDomain: "arus-system.firebaseapp.com",
-  projectId: "arus-system",
-  storageBucket: "arus-system.firebasestorage.app",
-  messagingSenderId: "703977728827",
-  appId: "1:703977728827:web:770161151ab5efabc9e51e"
-};
+// Kredensial Supabase milikmu
+const supabaseUrl = 'https://assaxxfdxtycdqkkkgpc.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzc2F4eGZkeHR5Y2Rxa2trZ3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMjk4MDQsImV4cCI6MjA5MjYwNTgwNH0.5L3XfA3GOQqIzzNGOBZRTSINqGugDp1sj07BBYpsqEc';
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// FITUR TOAST
+// FITUR TOAST 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
-    
-    let icon = '🔔';
-    if (type === 'success') icon = '✅';
-    if (type === 'error') icon = '❌';
-
+    let icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '🔔';
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `<div class="toast-icon">${icon}</div><div style="flex:1;">${message}</div>`;
-    
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
@@ -39,23 +24,25 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// LOADING
+// FITUR LOADING
 function toggleLoading(show) {
     const loader = document.getElementById('loading-overlay');
     if (loader) loader.style.display = show ? 'flex' : 'none';
 }
 
-// AUTH MONITOR
+// AUTH MONITOR (PENGGANTI onAuthStateChanged FIREBASE)
 function monitorAuthState(callback) {
-    onAuthStateChanged(auth, (user) => {
-        toggleLoading(false); 
-        callback(user);
+    // Cek sesi saat halaman dimuat
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        toggleLoading(false);
+        callback(session?.user || null);
+    });
+
+    // Dengarkan perubahan login/logout
+    supabase.auth.onAuthStateChange((_event, session) => {
+        toggleLoading(false);
+        callback(session?.user || null);
     });
 }
 
-export { 
-    auth, db, 
-    createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-    doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot,
-    showToast, toggleLoading, monitorAuthState
-};
+export { supabase, showToast, toggleLoading, monitorAuthState };

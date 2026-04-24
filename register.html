@@ -19,7 +19,6 @@
         }
         .alert-icon { font-size: 1.2rem; margin-right: 10px; }
         
-        /* Style khusus untuk Dropdown Bank */
         select optgroup { font-weight: bold; color: #666; }
         select option { font-weight: normal; color: #333; }
     </style>
@@ -80,8 +79,7 @@
     </div>
 
     <script type="module">
-        // MILA MENAMBAHKAN 'addDoc' DI BARIS IMPORT INI
-        import { auth, db, createUserWithEmailAndPassword, doc, setDoc, getDoc, collection, query, where, getDocs, showToast, monitorAuthState, addDoc } from './app.js?v=final5';
+        import { supabase, showToast, monitorAuthState } from './app.js';
 
         const refCode = new URLSearchParams(window.location.search).get('ref');
         let isRegistering = false; 
@@ -97,10 +95,12 @@
                 setTimeout(() => window.location.href = "index.html", 2000);
                 return;
             }
+            
             try {
-                const docSnap = await getDoc(doc(db, "users", refCode));
-                if (docSnap.exists()) {
-                    document.getElementById('upline-name').innerText = docSnap.data().nama;
+                // SUPABASE: Ambil data Upline
+                const { data, error } = await supabase.from('users').select('nama').eq('id', refCode).single();
+                if (data) {
+                    document.getElementById('upline-name').innerText = data.nama;
                     document.getElementById('btnDaftar').disabled = false;
                 } else { 
                     document.getElementById('upline-name').innerText = "KODE TIDAK VALID";
@@ -130,69 +130,50 @@
             isRegistering = true; 
 
             try {
-                // TETAP CEK DUPLIKAT (ANTI-TUYUL AKTIF)
-                const usersRef = collection(db, "users");
-                const qRek = query(usersRef, where("rekening", "==", rek));
-                if (!(await getDocs(qRek)).empty) throw new Error("⛔ GAGAL: Nomor Rekening/E-Wallet ini SUDAH TERDAFTAR!");
+                // SUPABASE: Cek duplikat rekening & WA
+                const { data: cekRek } = await supabase.from('users').select('id').eq('rekening', rek);
+                if (cekRek && cekRek.length > 0) throw new Error("⛔ GAGAL: Nomor Rekening/E-Wallet ini SUDAH TERDAFTAR!");
 
-                const qWA = query(usersRef, where("no_wa", "==", waFinal));
-                if (!(await getDocs(qWA)).empty) throw new Error("⛔ GAGAL: Nomor WhatsApp ini SUDAH TERDAFTAR!");
+                const { data: cekWa } = await supabase.from('users').select('id').eq('no_wa', waFinal);
+                if (cekWa && cekWa.length > 0) throw new Error("⛔ GAGAL: Nomor WhatsApp ini SUDAH TERDAFTAR!");
 
                 btn.innerText = "Mendaftarkan...";
 
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                let newUplines = { kawan_1: "", kawan_2: "", kawan_3: "", kawan_4: "" };
+                // 1. Buat Akun Auth
+                const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pass });
+                if (authError) throw authError;
+                
+                const newUserId = authData.user.id;
 
-                try {
-                    if (refCode) {
-                        const uplineSnap = await getDoc(doc(db, "users", refCode));
-                        if (uplineSnap.exists()) {
-                            const uData = uplineSnap.data();
-                            newUplines = {
-                                kawan_1: uData.uplines ? uData.uplines.kawan_2 : refCode,
-                                kawan_2: uData.uplines ? uData.uplines.kawan_3 : refCode,
-                                kawan_3: uData.uplines ? uData.uplines.kawan_4 : refCode,
-                                kawan_4: refCode
-                            };
-                        }
-                    }
-                } catch (errUpline) { console.log("Error upline"); }
-
-                // SIMPAN DATA LENGKAP KE DATABASE
-                await setDoc(doc(db, "users", cred.user.uid), {
-                    uid: cred.user.uid,
-                    nama: nama,
-                    email: email,
-                    bank: bank, 
-                    rekening: rek,
-                    no_wa: waFinal,
-                    uplines: newUplines,
-                    status: "PENDING",
-                    createdAt: new Date()
-                });
-
-                // --- MULAI TAMBAHAN MILA: OTOMATIS KIRIM NOTIFIKASI KE 4 UPLINE ---
-                const uplineList = [
-                    { id: newUplines.kawan_1, pos: 'kawan_1' },
-                    { id: newUplines.kawan_2, pos: 'kawan_2' },
-                    { id: newUplines.kawan_3, pos: 'kawan_3' },
-                    { id: newUplines.kawan_4, pos: 'kawan_4' }
-                ];
-
-                for (const upline of uplineList) {
-                    if (upline.id) {
-                        await addDoc(collection(db, "transactions"), {
-                            senderId: cred.user.uid,
-                            senderName: nama,
-                            receiverId: upline.id,
-                            amount: 30000,
-                            position: upline.pos,
-                            status: "WAITING",
-                            timestamp: new Date()
-                        });
+                // 2. Susun Upline
+                let k_1 = refCode, k_2 = refCode, k_3 = refCode, k_4 = refCode;
+                if (refCode) {
+                    const { data: uData } = await supabase.from('users').select('*').eq('id', refCode).single();
+                    if (uData) {
+                        k_1 = uData.kawan_2 || refCode;
+                        k_2 = uData.kawan_3 || refCode;
+                        k_3 = uData.kawan_4 || refCode;
+                        k_4 = refCode;
                     }
                 }
-                // --- AKHIR TAMBAHAN MILA ---
+
+                // 3. Simpan Profil ke public.users
+                const { error: dbError } = await supabase.from('users').insert({
+                    id: newUserId, nama: nama, email: email, bank: bank, rekening: rek, no_wa: waFinal, 
+                    status: 'PENDING', kawan_1: k_1, kawan_2: k_2, kawan_3: k_3, kawan_4: k_4
+                });
+                if (dbError) throw dbError;
+
+                // 4. Buat 4 Transaksi Menunggu
+                const trxData = [
+                    { sender_id: newUserId, sender_name: nama, receiver_id: k_1, position: 'kawan_1' },
+                    { sender_id: newUserId, sender_name: nama, receiver_id: k_2, position: 'kawan_2' },
+                    { sender_id: newUserId, sender_name: nama, receiver_id: k_3, position: 'kawan_3' },
+                    { sender_id: newUserId, sender_name: nama, receiver_id: k_4, position: 'kawan_4' }
+                ];
+                
+                const { error: trxError } = await supabase.from('transactions').insert(trxData);
+                if(trxError) console.error("Error trx:", trxError);
 
                 showToast("Berhasil! Mengalihkan...", "success");
                 setTimeout(() => window.location.href = "dashboard.html", 2000);
@@ -200,7 +181,7 @@
             } catch (err) { 
                 isRegistering = false; 
                 let msg = err.message;
-                if(msg.includes("email-already-in-use")) msg = "Email sudah terdaftar!";
+                if(msg.includes("already registered") || msg.includes("already-in-use")) msg = "Email sudah terdaftar!";
                 showToast(msg, "error"); 
                 btn.innerText = "Gabung Sekarang"; btn.disabled = false; 
             }
