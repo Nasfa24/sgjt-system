@@ -223,7 +223,8 @@
                             const btn = document.getElementById(`btn-${pos}`);
                             if(btn) {
                                 btn.onclick = async () => {
-                                    const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer ⚠️\nMohon dicek & APPROVE ya! ( Masuk di arus.fun/login )`;
+                                    // TEKS SUDAH DITAMBAHKAN INFO FOTO TRANSFER
+                                    const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer Rp 30.000 ⚠️\n\n*(Mohon kirimkan / lampirkan FOTO BUKTI TRANSFER di bawah pesan ini)*\n\nMohon dicek & APPROVE ya! ( Masuk di arus.fun/login )`;
                                     
                                     let waUpline = uData.no_wa || "";
                                     waUpline = waUpline.toString().replace(/[^0-9]/g, ''); 
@@ -232,7 +233,8 @@
 
                                     window.open(`https://wa.me/${waUpline}?text=${encodeURIComponent(msg)}`, '_blank');
                                     
-                                    if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}? Klik OK jika sudah.`)) {
+                                    // PERINGATAN KONFIRMASI DI-UPDATE
+                                    if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}?\n\n(Pastikan Anda mengirim foto bukti transfer di WhatsApp terlebih dahulu). Klik OK jika sudah.`)) {
                                         await supabase.from('transactions').insert({ 
                                             sender_id: myUID, receiver_id: uplines[pos], 
                                             sender_name: currentUserName, amount: 30000, 

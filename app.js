@@ -1,4 +1,4 @@
-// app.js - ARUS SYSTEM SUPABASE V1.0
+// app.js - ARUS SYSTEM SUPABASE V1.1 (Bug Fix Double Render)
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -30,18 +30,25 @@ function toggleLoading(show) {
     if (loader) loader.style.display = show ? 'flex' : 'none';
 }
 
-// AUTH MONITOR (PENGGANTI onAuthStateChanged FIREBASE)
+// AUTH MONITOR (SUDAH DIPERBAIKI AGAR TIDAK DOBEL TAMPILAN)
+let authInitialized = false; 
+
 function monitorAuthState(callback) {
     // Cek sesi saat halaman dimuat
     supabase.auth.getSession().then(({ data: { session } }) => {
-        toggleLoading(false);
-        callback(session?.user || null);
+        if (!authInitialized) {
+            authInitialized = true;
+            toggleLoading(false);
+            callback(session?.user || null);
+        }
     });
 
     // Dengarkan perubahan login/logout
-    supabase.auth.onAuthStateChange((_event, session) => {
-        toggleLoading(false);
-        callback(session?.user || null);
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            toggleLoading(false);
+            callback(session?.user || null);
+        }
     });
 }
 

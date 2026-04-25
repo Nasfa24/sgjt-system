@@ -97,7 +97,7 @@
             </div>
 
             <a id="btnLanjut" href="#" class="btn-start">
-                Siap, Gabung Sekarang!
+                Memuat...
             </a>
 
             <div style="text-align:center; margin-top:20px;">
@@ -114,20 +114,46 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script>
-        // UID OWNER DI SUPABASE SUDAH DISESUAIKAN DENGAN MILIKMU (BARU)
+    <script type="module">
+        import { supabase } from './app.js';
+
+        // UID OWNER DI SUPABASE SEBAGAI CADANGAN
         const ADMIN_UID = "387cafaa-53fe-4bbd-9233-451d4dff6354"; 
 
         const params = new URLSearchParams(window.location.search);
         let refCode = params.get('ref');
+        const btn = document.getElementById('btnLanjut');
         
-        if (!refCode) {
-            console.log("Traffic organik terdeteksi. Auto-ref ke Owner.");
-            refCode = ADMIN_UID;
+        async function setDynamicReferral() {
+            // Jika masuk pakai link referral, gunakan itu
+            if (refCode) {
+                btn.innerText = "Siap, Gabung Sekarang!";
+                btn.href = `register.html?ref=${refCode}`;
+                return;
+            }
+
+            // Jika nyasar (Organik), carikan Upline Acak
+            console.log("Traffic organik terdeteksi. Mencari Upline ACTIVE secara acak...");
+            btn.innerText = "Mencari Slot Kosong...";
+            
+            try {
+                const { data, error } = await supabase.from('users').select('id').eq('status', 'ACTIVE');
+                if (data && data.length > 0) {
+                    const randomUser = data[Math.floor(Math.random() * data.length)];
+                    refCode = randomUser.id;
+                    console.log("Upline acak terpilih!");
+                } else {
+                    refCode = ADMIN_UID;
+                }
+            } catch (e) {
+                refCode = ADMIN_UID;
+            }
+            
+            btn.innerText = "Siap, Gabung Sekarang!";
+            btn.href = `register.html?ref=${refCode}`;
         }
 
-        const btn = document.getElementById('btnLanjut');
-        btn.href = `register.html?ref=${refCode}`;
+        setDynamicReferral();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
