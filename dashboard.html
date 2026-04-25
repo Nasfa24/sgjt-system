@@ -18,7 +18,8 @@
         .custom-modal { background: white; width: 90%; max-width: 380px; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); transform: scale(0.8); transition: 0.3s; animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .modal-icon { font-size: 3rem; margin-bottom: 15px; display: block; animation: bounce 1s infinite; }
         .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; }
-        .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 25px; line-height: 1.5; }
+        /* Tambahan white-space agar enter (\n) di Javascript bisa terbaca di HTML */
+        .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 25px; line-height: 1.5; white-space: pre-wrap; } 
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .btn-cancel { background: #dfe6e9; color: #636e72; flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
         .btn-confirm { background: var(--primary-gradient); color: white; flex: 1; padding: 12px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,114,255,0.3); }
@@ -59,6 +60,18 @@
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal()">Batal</button>
                 <button id="btnRealConfirm" class="btn-confirm">Ya, Masuk!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="genericConfirmModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <span id="gcm-icon" class="modal-icon">⚠️</span>
+            <h3 id="gcm-title" class="modal-title">Konfirmasi</h3>
+            <p id="gcm-desc" class="modal-desc">Apakah Anda yakin?</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeGenericModal(false)">Batal</button>
+                <button id="btnGenericConfirm" class="btn-confirm">Ya</button>
             </div>
         </div>
     </div>
@@ -142,14 +155,15 @@
             </div>
             <div id="transfer-list"></div>
         </div>
-    </div> <script type="module">
+    </div>
+
+    <script type="module">
         import { supabase, monitorAuthState, showToast, toggleLoading } from './app.js';
 
         let currentUserUID = null;
         let currentUserName = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN & 8 UID DUMMY LENGKAP
         const MASTER_ADMIN_ID = "7a4e848d-7ea7-4f97-ae78-7384e0b71837"; 
         const DUMMY_IDS = [
             MASTER_ADMIN_ID,
@@ -162,6 +176,34 @@
             "387cafaa-53fe-4bbd-9233-451d4dff6354",
             "e160b723-f89f-43f9-adc2-7d563731c7d8"
         ];
+
+        // ==========================================
+        // FUNGSI CUSTOM KONFIRMASI (Membunuh confirm() Bawaan)
+        // ==========================================
+        window.closeGenericModal = function(val) {
+            document.getElementById('genericConfirmModal').style.display = 'none';
+            if(window.genericConfirmResolve) window.genericConfirmResolve(val);
+        }
+
+        window.customConfirm = function(title, desc, icon="⚠️", btnText="Ya") {
+            return new Promise((resolve) => {
+                window.genericConfirmResolve = resolve;
+                document.getElementById('gcm-title').innerHTML = title;
+                document.getElementById('gcm-desc').innerHTML = desc;
+                document.getElementById('gcm-icon').innerText = icon;
+                
+                const btnConfirm = document.getElementById('btnGenericConfirm');
+                btnConfirm.innerText = btnText;
+                
+                document.getElementById('genericConfirmModal').style.display = 'flex';
+                
+                btnConfirm.onclick = function() {
+                    window.closeGenericModal(true);
+                };
+            });
+        }
+
+        // ==========================================
 
         monitorAuthState(async (user) => {
             if (user) {
@@ -198,9 +240,6 @@
             } else { window.location.href = "login.html"; }
         });
 
-        // ==========================================
-        // FUNGSI BARU: KIRIM PROSPEK WA (LEAD GEN)
-        // ==========================================
         window.kirimProspekWA = async function() {
             const waInput = document.getElementById('wa-prospek').value;
             if (!waInput) return showToast("Masukkan nomor WA calon Kawan dulu!", "error");
@@ -228,9 +267,6 @@
             showToast("Membuka WhatsApp...", "success");
         }
 
-        // ==========================================
-        // FUNGSI KHUSUS PANEL ADMIN
-        // ==========================================
         async function loadAdminControls() {
             const { count: activeCount } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE');
             document.getElementById('adm-active').innerText = activeCount || 0;
@@ -261,8 +297,17 @@
             toggleLoading(false);
         };
 
+        // MENGGUNAKAN CUSTOM CONFIRM UNTUK APPROVE MASSAL
         document.getElementById('btnAdmApproveAll').onclick = async () => {
-            if(!confirm("Anda yakin ingin menyetujui SEMUA antrean yang masuk ke 8 akun dummy ini?")) return;
+            const isConfirmed = await window.customConfirm(
+                "Approve Massal?", 
+                "Anda yakin ingin menyetujui SEMUA antrean yang masuk ke 8 akun pancingan ini?", 
+                "⚡", 
+                "Ya, Approve Semua"
+            );
+            
+            if(!isConfirmed) return;
+            
             toggleLoading(true);
             const { data: list } = await supabase.from('transactions').select('id, sender_id').in('receiver_id', DUMMY_IDS).eq('status', 'WAITING');
             if (list && list.length > 0) {
@@ -279,9 +324,6 @@
             toggleLoading(false);
         };
 
-        // ==========================================
-        // KONTROL STANDAR DASHBOARD
-        // ==========================================
         document.getElementById('btnLogout').addEventListener('click', async () => {
             await supabase.auth.signOut();
             window.location.href="login.html";
@@ -372,7 +414,15 @@
                                     window.open(`https://wa.me/${waUpline}?text=${encodeURIComponent(msg)}`, '_blank');
                                     
                                     if(status === "NONE") {
-                                        if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}?\n\n(Pastikan Anda mengirim foto bukti transfer di WhatsApp terlebih dahulu). Klik OK jika sudah.`)) {
+                                        // MENGGUNAKAN CUSTOM CONFIRM UNTUK KONFIRMASI SUDAH TRANSFER WA
+                                        const isConfirmed = await window.customConfirm(
+                                            "Konfirmasi Transfer", 
+                                            `Apakah Anda SUDAH transfer ke <strong>${uData.nama}</strong>?\n\n(Pastikan Anda mengirim foto bukti transfer di WhatsApp terlebih dahulu).`, 
+                                            "💸", 
+                                            "Ya, Sudah!"
+                                        );
+
+                                        if(isConfirmed) {
                                             await supabase.from('transactions').insert({ 
                                                 sender_id: myUID, receiver_id: uplines[pos], 
                                                 sender_name: currentUserName, amount: 30000, 
