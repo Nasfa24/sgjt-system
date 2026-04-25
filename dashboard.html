@@ -139,13 +139,17 @@
         let currentUserName = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN & DUMMY
+        // KONFIGURASI ADMIN & SEMUA DUMMY
         const MASTER_ADMIN_ID = "387cafaa-53fe-4bbd-9233-451d4dff6354"; 
         const DUMMY_IDS = [
             MASTER_ADMIN_ID,
-            "7dd37178-6a66-4b7b-91e4-005dd408980a", "a4995059-778c-4875-8023-ec602ca52cf2",
-            "cd435b2d-abf7-459e-be87-bc6b17d736c7", "2f4afd40-b35d-4dcd-ae5a-887f6633909b",
-            "c8ab6d4a-f5db-4fa8-ab80-b0e639175463", "e160b723-f89f-43f9-adc2-7d563731c7d8"
+            "7a4e848d-7ea7-4f97-ae78-7384e0b71837", // Ditambahkan: UID Admin Lama
+            "7dd37178-6a66-4b7b-91e4-005dd408980a", 
+            "a4995059-778c-4875-8023-ec602ca52cf2",
+            "cd435b2d-abf7-459e-be87-bc6b17d736c7", 
+            "2f4afd40-b35d-4dcd-ae5a-887f6633909b",
+            "c8ab6d4a-f5db-4fa8-ab80-b0e639175463", 
+            "e160b723-f89f-43f9-adc2-7d563731c7d8"
         ];
 
         monitorAuthState(async (user) => {
