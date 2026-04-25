@@ -33,6 +33,11 @@
         #admin-table td { padding: 10px; border-bottom: 1px solid #e0e7ff; }
         .btn-admin-approve { background: var(--success); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
+        /* CSS KHUSUS TOMBOL WA GRUP */
+        .wa-group-box { background: #e8f5e9; border: 2px dashed #2e7d32; padding: 15px; border-radius: 12px; margin: 20px 0; }
+        .wa-group-btn { display: inline-block; background: #25d366; color: white; padding: 12px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 10px rgba(37,211,102,0.3); width: 100%; box-sizing: border-box; margin-top: 10px; transition: transform 0.2s; }
+        .wa-group-btn:hover { transform: scale(1.05); }
+
         .hidden { display: none !important; }
         @keyframes popIn { to { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
@@ -97,9 +102,16 @@
 
         <div id="active-area" class="card hidden" style="border:2px solid var(--success); text-align:center;">
             <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
-            <h3 style="color:var(--success);">Selamat! Akun Aktif</h3>
-            <p>Sekarang giliranmu menerima aliran dana.</p>
-            <p style="font-size:0.85rem; color:#666; margin-top:5px;">Bagikan link ini ke temanmu:</p>
+            <h3 style="color:var(--success); margin-bottom: 5px;">Selamat! Akun Aktif</h3>
+            <p style="margin-top: 0; color: #555;">Sekarang giliranmu menerima aliran dana.</p>
+            
+            <div class="wa-group-box">
+                <h4 style="color:#2e7d32; margin-top:0; margin-bottom:5px;">🌟 Komunitas Eksklusif</h4>
+                <p style="font-size:0.85rem; color:#388e3c; margin-bottom:10px;">Gabung grup WhatsApp khusus member aktif untuk mendapat info update & bimbingan!</p>
+                <a href="https://chat.whatsapp.com/ClDMoaigxh5JhGRCvHrO6q" target="_blank" class="wa-group-btn">Gabung Grup WA 💬</a>
+            </div>
+
+            <p style="font-size:0.85rem; color:#666; margin-top:20px;">Bagikan link ini ke temanmu:</p>
             <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px; border:2px dashed var(--primary);">
             <button onclick="copyLink()">Salin Link Referral 📋</button>
         </div>
@@ -125,10 +137,10 @@
 
         let currentUserUID = null;
         let currentUserName = "";
-        let isPendingRendered = false; // Gembok Anti Dobel Render
+        let isPendingRendered = false; 
         
         // KONFIGURASI ADMIN & DUMMY
-        const MASTER_ADMIN_ID = "387cafaa-53fe-4bbd-9233-451d4dff6354"; // UID ADMIN KAMU
+        const MASTER_ADMIN_ID = "387cafaa-53fe-4bbd-9233-451d4dff6354"; 
         const DUMMY_IDS = [
             MASTER_ADMIN_ID,
             "7dd37178-6a66-4b7b-91e4-005dd408980a", "a4995059-778c-4875-8023-ec602ca52cf2",
@@ -140,7 +152,6 @@
             if (user) {
                 currentUserUID = user.id;
 
-                // Tampilkan Panel Admin jika UID cocok
                 if (currentUserUID === MASTER_ADMIN_ID) {
                     document.getElementById('admin-panel').classList.remove('hidden');
                     loadAdminControls();
@@ -206,7 +217,7 @@
         };
 
         document.getElementById('btnAdmApproveAll').onclick = async () => {
-            if(!confirm("Anda yakin ingin menyetujui SEMUA antrean yang masuk ke 6 akun dummy ini?")) return;
+            if(!confirm("Anda yakin ingin menyetujui SEMUA antrean yang masuk ke akun dummy ini?")) return;
             toggleLoading(true);
             const { data: list } = await supabase.from('transactions').select('id, sender_id').in('receiver_id', DUMMY_IDS).eq('status', 'WAITING');
             if (list && list.length > 0) {
@@ -252,7 +263,6 @@
         }
 
         async function showPendingDashboard(myUID, uplines) {
-            // MENCEGAH EKSEKUSI BERULANG KALI (BUG FIX DOBEL TAMPILAN)
             if (isPendingRendered) return;
             isPendingRendered = true;
 
@@ -279,7 +289,6 @@
                     if(status === "APPROVED") {
                         footerContent = `<div style="background:#d4edda; color:#155724; padding:10px; border-radius:8px; font-weight:bold;">✅ LUNAS / DITERIMA</div>`;
                     } else if(status === "WAITING" || status === "NONE") {
-                        // TOMBOL WA DITAMPILKAN
                         footerContent = `
                             <div style="background:#fff3cd; color:#856404; padding:8px; border-radius:8px; font-weight:bold; margin-bottom:5px;">⏳ MENUNGGU KONFIRMASI</div>
                             <button id="btn-${pos}" class="btn-wa" style="margin-top:5px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);">Kirim Bukti WhatsApp 💬</button>
@@ -303,13 +312,11 @@
                     `;
                     list.appendChild(card);
 
-                    // LOGIKA TOMBOL WA KETIKA DIKLIK
                     if(status === "WAITING" || status === "NONE") {
                         setTimeout(() => {
                             const btn = document.getElementById(`btn-${pos}`);
                             if(btn) {
                                 btn.onclick = async () => {
-                                    // TEKS WA DENGAN INSTRUKSI BUKTI TRANSFER
                                     const msg = `Halo Kak ${uData.nama}, saya ${currentUserName} member baru ARUS. Saya sudah transfer Rp 30.000 ⚠️\n\n*(Mohon kirimkan / lampirkan FOTO BUKTI TRANSFER di bawah pesan ini)*\n\nMohon dicek & APPROVE ya! ( Masuk di arus.fun/login )`;
                                     
                                     let waUpline = uData.no_wa || "";
@@ -317,10 +324,8 @@
                                     if (waUpline.startsWith('0')) waUpline = '62' + waUpline.substring(1);
                                     else if (!waUpline.startsWith('62')) waUpline = '62' + waUpline; 
 
-                                    // BUKA WHATSAPP
                                     window.open(`https://wa.me/${waUpline}?text=${encodeURIComponent(msg)}`, '_blank');
                                     
-                                    // JIKA STATUS SEBELUMNYA NONE, BUAT TRANSAKSI BARU
                                     if(status === "NONE") {
                                         if(confirm(`Apakah Anda SUDAH transfer ke ${uData.nama}?\n\n(Pastikan Anda mengirim foto bukti transfer di WhatsApp terlebih dahulu). Klik OK jika sudah.`)) {
                                             await supabase.from('transactions').insert({ 
