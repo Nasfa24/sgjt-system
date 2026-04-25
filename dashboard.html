@@ -33,10 +33,14 @@
         #admin-table td { padding: 10px; border-bottom: 1px solid #e0e7ff; }
         .btn-admin-approve { background: var(--success); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
-        /* CSS KHUSUS TOMBOL WA GRUP */
+        /* CSS WA GRUP & PROSPEK */
         .wa-group-box { background: #e8f5e9; border: 2px dashed #2e7d32; padding: 15px; border-radius: 12px; margin: 20px 0; }
         .wa-group-btn { display: inline-block; background: #25d366; color: white; padding: 12px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 10px rgba(37,211,102,0.3); width: 100%; box-sizing: border-box; margin-top: 10px; transition: transform 0.2s; }
         .wa-group-btn:hover { transform: scale(1.05); }
+        
+        .prospek-box { background: #f1f8ff; padding: 15px; border-radius: 12px; text-align: left; border: 1px solid #c7d2fe; margin-top: 20px; }
+        .prospek-input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-family: 'Poppins', sans-serif; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
+        .prospek-btn { background: #0072ff; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-family: 'Poppins', sans-serif;}
 
         .hidden { display: none !important; }
         @keyframes popIn { to { transform: scale(1); } }
@@ -111,9 +115,16 @@
                 <a href="https://chat.whatsapp.com/ClDMoaigxh5JhGRCvHrO6q" target="_blank" class="wa-group-btn">Gabung Grup WA 💬</a>
             </div>
 
-            <p style="font-size:0.85rem; color:#666; margin-top:20px;">Bagikan link ini ke temanmu:</p>
-            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px; border:2px dashed var(--primary);">
-            <button onclick="copyLink()">Salin Link Referral 📋</button>
+            <div class="prospek-box">
+                <h4 style="margin: 0 0 5px 0; color: #4338ca;">🚀 Kirim Undangan Cepat</h4>
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Kirim pesan undangan otomatis ke WhatsApp Calon Kawanmu. Praktis & ga ribet!</p>
+                <input type="number" id="wa-prospek" class="prospek-input" placeholder="No. WA Calon Kawan (Cth: 0812...)">
+                <button onclick="kirimProspekWA()" class="prospek-btn">Buat Pesan WhatsApp 💬</button>
+            </div>
+
+            <p style="font-size:0.85rem; color:#666; margin-top:20px;">Atau bagikan link ini manual:</p>
+            <input type="text" id="my-ref-link" readonly onclick="this.select()" style="text-align:center; font-weight:bold; color:var(--primary); margin-top:5px; border:2px dashed var(--primary);">
+            <button onclick="copyLink()" style="margin-top:10px;">Salin Link Referral 📋</button>
         </div>
 
         <div id="pending-area" class="hidden">
@@ -139,11 +150,11 @@
         let currentUserName = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN & SEMUA DUMMY
+        // KONFIGURASI ADMIN & 8 UID LENGKAP
         const MASTER_ADMIN_ID = "387cafaa-53fe-4bbd-9233-451d4dff6354"; 
         const DUMMY_IDS = [
             MASTER_ADMIN_ID,
-            "7a4e848d-7ea7-4f97-ae78-7384e0b71837", // Ditambahkan: UID Admin Lama
+            "7a4e848d-7ea7-4f97-ae78-7384e0b71837",
             "7dd37178-6a66-4b7b-91e4-005dd408980a", 
             "a4995059-778c-4875-8023-ec602ca52cf2",
             "cd435b2d-abf7-459e-be87-bc6b17d736c7", 
@@ -188,6 +199,42 @@
         });
 
         // ==========================================
+        // FUNGSI BARU: KIRIM PROSPEK WA (LEAD GEN)
+        // ==========================================
+        window.kirimProspekWA = async function() {
+            const waInput = document.getElementById('wa-prospek').value;
+            if (!waInput) return showToast("Masukkan nomor WA calon Kawan dulu!", "error");
+
+            // Format nomor jadi 62...
+            let waClean = waInput.replace(/[^0-9]/g, '');
+            if (waClean.startsWith('0')) waClean = '62' + waClean.substring(1);
+            else if (!waClean.startsWith('62')) waClean = '62' + waClean;
+
+            // 1. Simpan Diam-diam ke Database Admin
+            try {
+                await supabase.from('prospek').insert({
+                    pengundang_uid: currentUserUID,
+                    pengundang_nama: currentUserName,
+                    no_wa_calon: waClean
+                });
+            } catch(e) { console.log("Gagal simpan DB"); }
+
+            // 2. Buat Teks Undangan WA
+            let baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
+            if(!baseUrl.endsWith('/')) baseUrl += '/';
+            const refLink = `${baseUrl}?ref=${currentUserUID}`;
+            
+            const msg = `Halo! Saya ${currentUserName} ingin mengundang kamu bergabung di komunitas ARUS 🌊.\n\nSistem yang adil untuk saling mengalirkan kebaikan dan rezeki. Modal sangat kecil namun berpotensi memutar hasil tak terbatas.\n\nYuk daftar sekarang melalui link referral VIP saya di bawah ini:\n${refLink}\n\nSetelah daftar, kabari saya ya!`;
+
+            // 3. Eksekusi Buka WhatsApp
+            window.open(`https://wa.me/${waClean}?text=${encodeURIComponent(msg)}`, '_blank');
+            
+            // 4. Bersihkan form
+            document.getElementById('wa-prospek').value = '';
+            showToast("Membuka WhatsApp...", "success");
+        }
+
+        // ==========================================
         // FUNGSI KHUSUS PANEL ADMIN
         // ==========================================
         async function loadAdminControls() {
@@ -221,7 +268,7 @@
         };
 
         document.getElementById('btnAdmApproveAll').onclick = async () => {
-            if(!confirm("Anda yakin ingin menyetujui SEMUA antrean yang masuk ke akun dummy ini?")) return;
+            if(!confirm("Anda yakin ingin menyetujui SEMUA antrean yang masuk ke 8 akun dummy ini?")) return;
             toggleLoading(true);
             const { data: list } = await supabase.from('transactions').select('id, sender_id').in('receiver_id', DUMMY_IDS).eq('status', 'WAITING');
             if (list && list.length > 0) {
