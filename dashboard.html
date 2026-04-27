@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -31,15 +32,15 @@
         .admin-box { background: #eef2ff; border: 2px dashed #818cf8; border-radius: 20px; padding: 20px; margin-top: 25px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; flex: 1; border: 1px solid #e0e7ff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .stat-card h2 { margin: 0; color: #4f46e5; font-size: 1.8rem; }
-        #admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        #admin-table th { background: #e0e7ff; padding: 12px; text-align: left; color: #3730a3; font-weight: 700; }
-        #admin-table td { padding: 12px; border-bottom: 1px solid #e0e7ff; color: #475569; }
+        #admin-table, #admin-hrd-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        #admin-table th, #admin-hrd-table th { background: #e0e7ff; padding: 12px; text-align: left; color: #3730a3; font-weight: 700; }
+        #admin-table td, #admin-hrd-table td { padding: 12px; border-bottom: 1px solid #e0e7ff; color: #475569; vertical-align: middle; }
         .btn-admin-approve { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-admin-approve:hover { background: #059669; }
         
         /* CSS WA GRUP & PROSPEK */
         .wa-group-box { background: #ecfdf5; border: 2px dashed #10b981; padding: 20px; border-radius: 16px; margin: 24px 0; }
-        .wa-group-btn { display: inline-block; background: #10b981; color: white; padding: 14px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100%; box-sizing: border-box; margin-top: 12px; transition: transform 0.2s; }
+        .wa-group-btn { display: inline-block; background: #10b981; color: white; padding: 14px 20px; border-radius: 12px; text-decoration: none; font-weight: 700; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); width: 100%; box-sizing: border-box; margin-top: 12px; transition: transform 0.2s; text-align: center; }
         .wa-group-btn:hover { transform: translateY(-2px); }
         
         .prospek-box { background: #f0f9ff; padding: 20px; border-radius: 16px; text-align: left; border: 1px solid #bae6fd; margin-top: 24px; }
@@ -47,8 +48,8 @@
         .prospek-btn { background: #0ea5e9; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; font-family: 'Poppins', sans-serif; font-size: 0.95rem; transition: 0.2s; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
         .prospek-btn:hover { transform: translateY(-2px); }
 
-        /* CSS KHUSUS TIM ARUS (HRD PANEL) - DESAIN PREMIUM */
-        .ta-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; margin-top: 30px; margin-bottom: 30px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        /* CSS KHUSUS TIM ARUS (HRD PANEL) */
+        .ta-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; margin-top: 30px; margin-bottom: 30px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); font-family: 'Plus Jakarta Sans', sans-serif; }
         .ta-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.2); }
         .ta-badge { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; display: inline-block; margin-bottom: 8px; }
         
@@ -56,6 +57,7 @@
         .ta-card:hover { transform: translateY(-2px); }
         .ta-card.daily { border-left-color: #f59e0b; background: #fffbeb; border-color: #fef3c7; }
         .ta-card.monthly { border-left-color: #ef4444; background: #fef2f2; border-color: #fee2e2; }
+        .ta-card.weekly { border-left-color: #3b82f6; background: #eff6ff; border-color: #bfdbfe; }
         .ta-card.income { border-left-color: #10b981; background: #ecfdf5; border-color: #d1fae5; }
         
         .ta-title { font-size: 1.15rem; font-weight: 800; color: #1e293b; margin-bottom: 6px; margin-top: 0; display: flex; align-items: center; gap: 8px; }
@@ -145,7 +147,19 @@
                 <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">🎯 Angkat Anggota TIM ARUS</h4>
                 <div style="display: flex; gap: 10px;">
                     <input type="number" id="input-wa-tim" placeholder="No. WA Pendaftar..." style="margin-bottom:0; padding:12px; font-size:0.9rem; border-radius: 8px;">
-                    <button onclick="angkatTimArus()" style="width:auto; padding:12px 18px; background:#10b981; font-size:0.9rem; border-radius: 8px;">Jadikan Tim!</button>
+                    <button onclick="angkatTimArus()" style="width:auto; padding:12px 18px; background:#10b981; font-size:0.9rem; border-radius: 8px; color:white; border:none; cursor:pointer;">Jadikan Tim!</button>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e0e7ff;">
+                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 0.95rem;">💼 Laporan HRD Tim Arus</h4>
+                <div style="overflow-x:auto; border-radius: 8px;">
+                    <table id="admin-hrd-table">
+                        <thead><tr><th>Nama Tim</th><th>Aktif (H/B)</th><th>Ngopi (H)</th><th>Gaji (B)</th><th>Aksi</th></tr></thead>
+                        <tbody id="admin-hrd-list">
+                            <tr><td colspan='5' style='text-align:center;'>Memuat data tim...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -177,6 +191,13 @@
                     <div style="font-size: 2.2rem; font-weight: 900; color: #f59e0b;"><span id="ta-daily-count">0</span></div>
                 </div>
                 <button id="btnKlaimNgopi" class="ta-btn-claim" disabled onclick="klaimUangNgopi()">🔒 Ajak Kawan Untuk Buka Kunci Kasbon</button>
+            </div>
+
+            <div class="ta-card weekly">
+                <h4 class="ta-title">📢 Misi Mingguan (Retensi Komunitas)</h4>
+                <p class="ta-subtitle">Arahkan minimal 10 kawan per minggu ke Saluran WhatsApp Resmi ARUS untuk perluas jangkauan.</p>
+                <a href="https://whatsapp.com/channel/0029VbC6Svo2P59rGwuORi0Y" target="_blank" style="display:block; text-align:center; background:#10b981; color:white; padding:12px; border-radius:10px; font-weight:700; text-decoration:none; margin-bottom:12px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">🔗 Buka Saluran WhatsApp ARUS</a>
+                <button onclick="laporSaluranWA()" style="background:#3b82f6; color:white; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; cursor:pointer; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">Kirim Bukti Laporan ke Admin 🚀</button>
             </div>
 
             <div class="ta-card monthly">
@@ -265,10 +286,14 @@
 
         let currentUserUID = null;
         let currentUserName = "";
+        let currentBank = "";
+        let currentRekening = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN
+        // KONFIGURASI ADMIN & WA
         const MASTER_ADMIN_ID = "7a4e848d-7ea7-4f97-ae78-7384e0b71837"; 
+        const NOMOR_WA_ADMIN = "6281339760265"; 
+        
         const DUMMY_IDS = [
             MASTER_ADMIN_ID,
             "7a4e848d-7ea7-4f97-ae78-7384e0b71837",
@@ -281,7 +306,6 @@
             "e160b723-f89f-43f9-adc2-7d563731c7d8"
         ];
 
-        // VARIABEL GLOBAL TIM ARUS
         let ta_uangNgopi = 0;
         let ta_gajiBulanan = 0;
 
@@ -316,20 +340,23 @@
                 
                 if (data) {
                     currentUserName = data.nama;
+                    currentBank = data.bank;
+                    currentRekening = data.rekening;
+                    
                     document.getElementById('user-name').innerText = data.nama;
                     
                     const statusEl = document.getElementById('user-status');
                     statusEl.innerText = data.status;
                     statusEl.className = `badge ${data.status === 'ACTIVE' ? 'active' : 'pending'}`;
 
-                    // Tampilkan Panel Master Admin
+                    // ADMIN PANEL
                     if (currentUserUID === MASTER_ADMIN_ID) {
                         document.getElementById('admin-panel').classList.remove('hidden');
                         loadAdminControls();
-                    }
-
-                    // Tampilkan Panel HRD Tim Arus BERDASARKAN ROLE DI DATABASE
-                    if (data.role === 'TIM_ARUS' || currentUserUID === MASTER_ADMIN_ID) {
+                        loadAdminHRDSummary(); 
+                    } 
+                    // TIM ARUS PANEL
+                    else if (data.role === 'TIM_ARUS') {
                         document.getElementById('tim-arus-panel').classList.remove('hidden');
                         loadTimArusData();
                     }
@@ -351,7 +378,7 @@
         });
 
         // ==========================================
-        // FITUR BARU: ADMIN MENGANGKAT TIM ARUS
+        // FITUR ADMIN: ANGKAT TIM ARUS
         // ==========================================
         window.angkatTimArus = async function() {
             const waInput = document.getElementById('input-wa-tim').value;
@@ -363,14 +390,13 @@
 
             toggleLoading(true);
             try {
-                // 1. Cari user di database berdasarkan WA
                 const { data: userTarget, error } = await supabase.from('users').select('id, nama').eq('no_wa', waClean).single();
                 
                 if(userTarget) {
-                    // 2. Ubah role-nya menjadi TIM_ARUS
                     await supabase.from('users').update({ role: 'TIM_ARUS' }).eq('id', userTarget.id);
                     showToast(`Sukses! ${userTarget.nama} resmi menjadi TIM ARUS.`, "success");
                     document.getElementById('input-wa-tim').value = '';
+                    if (currentUserUID === MASTER_ADMIN_ID) loadAdminHRDSummary();
                 } else {
                     showToast("Nomor WA tidak ditemukan. Pastikan dia sudah mendaftar!", "error");
                 }
@@ -378,6 +404,81 @@
                 showToast("Terjadi kesalahan koneksi sistem.", "error");
             }
             toggleLoading(false);
+        }
+
+        // ==========================================
+        // FITUR ADMIN: REKAP BEBAN HRD & TANYA KABAR WA
+        // ==========================================
+        async function loadAdminHRDSummary() {
+            // Kita tambahkan pemanggilan kolom no_wa untuk fitur chat WA personal
+            const { data: timArusMembers } = await supabase.from('users').select('id, nama, no_wa').eq('role', 'TIM_ARUS');
+            const tbody = document.getElementById('admin-hrd-list');
+            tbody.innerHTML = '';
+
+            if(!timArusMembers || timArusMembers.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Belum ada Tim Arus yang diangkat.</td></tr>";
+                return;
+            }
+
+            const dateObj = new Date();
+            const todayStr = dateObj.toLocaleDateString('en-CA');
+            const firstDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString();
+
+            for(let leader of timArusMembers) {
+                const { data: recruits } = await supabase.from('users')
+                    .select('status, created_at')
+                    .eq('kawan_1', leader.id)
+                    .gte('created_at', firstDayOfMonth);
+                
+                let aktifBln = 0; let aktifHr = 0;
+                if(recruits) {
+                    recruits.forEach(r => {
+                        const rDate = new Date(r.created_at).toLocaleDateString('en-CA');
+                        if(r.status === 'ACTIVE') {
+                            aktifBln++;
+                            if(rDate === todayStr) aktifHr++;
+                        }
+                    });
+                }
+
+                let uangNgopi = aktifHr * 10000;
+                if (uangNgopi > 35000) uangNgopi = 35000;
+                
+                let defisit = (dateObj.getDate() * 3) - aktifBln;
+                if(defisit < 0) defisit = 0;
+                let potongan = defisit * 15000;
+                if(potongan > 1500000) potongan = 1500000;
+                let gaji = 1500000 - potongan;
+
+                // Tanda kutip wajib diperhatikan untuk memanggil parameter string di JS
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:600;">${leader.nama}</td>
+                    <td><span style="color:#f59e0b;font-weight:bold;">${aktifHr}</span> / <span style="color:#10b981;font-weight:bold;">${aktifBln}</span></td>
+                    <td style="color:#d97706;font-weight:600;">Rp ${uangNgopi.toLocaleString('id-ID')}</td>
+                    <td style="color:#0f172a;font-weight:600;">Rp ${gaji.toLocaleString('id-ID')}</td>
+                    <td>
+                        <button onclick="hubungiTimArus('${leader.nama}', '${leader.no_wa || ''}', ${aktifBln})" style="background:#25D366; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:700; box-shadow:0 2px 4px rgba(37,211,102,0.2);">Tanya Kabar 💬</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        window.hubungiTimArus = function(nama, no_wa, aktifBln) {
+            if(!no_wa) {
+                showToast("Nomor WhatsApp tidak tersimpan untuk anggota ini.", "error");
+                return;
+            }
+            
+            let waClean = no_wa.toString().replace(/[^0-9]/g, '');
+            if (waClean.startsWith('0')) waClean = '62' + waClean.substring(1);
+            else if (!waClean.startsWith('62')) waClean = '62' + waClean;
+
+            // Draf Pesan Edukatif, Suportif, dan Nurturing ("Bapak Arsitek" / Fasilitator)
+            const pesan = `Halo Kak ${nama}, gimana kabarnya? 😊\n\nSaya dari pusat (Arsitek Sistem) memantau, untuk progres bulan ini Kakak baru mencapai ${aktifBln} kawan aktif nih.\n\nKalau misal ada kendala teknis di lapangan, kesulitan buat ngejelasin sistemnya ke orang, atau butuh amunisi/strategi tambahan, cerita aja ya Kak. Peran saya di sini emang untuk bantu *support* Kakak dari belakang layar biar target dan gajinya bisa tembus maksimal.\n\nPelan-pelan nggak apa-apa yang penting konsisten. Tetap semangat ya Kak! 🌊🔥`;
+
+            window.open(`https://wa.me/${waClean}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
 
         // ==========================================
@@ -394,7 +495,7 @@
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             document.getElementById('ta-period').innerText = `Bulan: ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 
-            const todayStr = dateObj.toLocaleDateString('en-CA'); // Format YYYY-MM-DD sesuai zona waktu lokal
+            const todayStr = dateObj.toLocaleDateString('en-CA'); 
             const firstDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString();
             
             const { data: recruits } = await supabase.from('users')
@@ -418,7 +519,7 @@
             // --- 1. UANG NGOPI (HARIAN) ---
             document.getElementById('ta-daily-count').innerText = aktifHariIni;
             ta_uangNgopi = aktifHariIni * 10000;
-            if (ta_uangNgopi > 35000) ta_uangNgopi = 35000; // Cap 35k
+            if (ta_uangNgopi > 35000) ta_uangNgopi = 35000; 
             
             document.getElementById('ta-daily-uang').innerText = "Rp " + ta_uangNgopi.toLocaleString('id-ID');
             
@@ -469,21 +570,24 @@
         }
 
         window.klaimUangNgopi = function() {
-            const adminWA = "6283130308537";
-            const pesan = `*KLAIM UANG NGOPI HARIAN* ☕\n\nHalo Pak Arsitek, saya mau klaim hasil kerja hari ini nih!\n\n👤 *Nama:* ${currentUserName}\n💸 *Nominal Cair:* Rp ${ta_uangNgopi.toLocaleString('id-ID')}\n\nMohon ditransfer ke rekening saya ya. Siap lanjut gas besok!`;
-            window.open(`https://wa.me/${adminWA}?text=${encodeURIComponent(pesan)}`, '_blank');
+            const pesan = `*KLAIM UANG NGOPI HARIAN* ☕\n\nHalo Pak Arsitek, saya mau klaim hasil kerja keras hari ini!\n\n👤 *Nama:* ${currentUserName}\n💸 *Nominal Cair:* Rp ${ta_uangNgopi.toLocaleString('id-ID')}\n\nMohon ditransfer ke rekening saya:\n🏦 *Bank:* ${currentBank}\n💳 *Rekening:* ${currentRekening}\n\nSiap lanjut gas besok!`;
+            window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
             showToast("Permintaan Uang Ngopi diteruskan ke Admin!", "success");
         }
 
         window.cairkanGajiBulanan = function() {
-            const adminWA = "6283130308537";
-            const pesan = `*PENCAIRAN GAJI TIM ARUS* 💼\n\nHalo Pak Arsitek, Laporan: Target KPI bulan ini telah tembus batas minimum 90%!\n\n👤 *Nama:* ${currentUserName}\n💰 *Total Gaji Bersih:* Rp ${ta_gajiBulanan.toLocaleString('id-ID')}\n\nMohon segera diproses.`;
-            window.open(`https://wa.me/${adminWA}?text=${encodeURIComponent(pesan)}`, '_blank');
+            const pesan = `*PENCAIRAN GAJI TIM ARUS* 💼\n\nHalo Pak Arsitek, Laporan: Target KPI bulan ini telah tembus batas minimum 90%!\n\n👤 *Nama:* ${currentUserName}\n💰 *Total Gaji Bersih:* Rp ${ta_gajiBulanan.toLocaleString('id-ID')}\n\nMohon segera diproses ke rekening saya:\n🏦 *Bank:* ${currentBank}\n💳 *Rekening:* ${currentRekening}\n\nSiap amankan target bulan depan!`;
+            window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
             showToast("Slip gaji diteruskan ke Direktur!", "success");
         }
 
+        window.laporSaluranWA = function() {
+            const pesan = `*LAPORAN MISI MINGGUAN: RETENSI KOMUNITAS* 📢\n\nHalo Pak Arsitek, saya telah berhasil mengarahkan kawan-kawan baru untuk bergabung ke Saluran WhatsApp ARUS. Berikut saya lampirkan buktinya (Screenshot) di bawah pesan ini ya.`;
+            window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
+        }
+
         // ==========================================
-        // KONTROL STANDAR
+        // KONTROL STANDAR (PENGUNDANG & TRANSAKSI)
         // ==========================================
 
         window.kirimProspekWA = async function() {
