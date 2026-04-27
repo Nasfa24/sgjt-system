@@ -240,16 +240,20 @@
                 </div>
 
                 <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 12px; border: 1px dashed #fecaca;">
+                    <div class="ta-salary-row" style="color: #94a3b8; font-size: 0.8rem;">
+                        <span>Gaji Pokok Full (1 Bulan):</span>
+                        <span>Rp 1.500.000</span>
+                    </div>
                     <div class="ta-salary-row">
-                        <span>Gaji Pokok Maksimal:</span>
-                        <span id="ta-base-salary">Rp 1.500.000</span>
+                        <span>Hak Gaji Berjalan (<span id="ta-hari-kerja">0</span> Hari):</span>
+                        <span id="ta-gaji-berjalan" style="color:#0ea5e9;">Rp 0</span>
                     </div>
                     <div class="ta-salary-row penalty">
-                        <span>Potongan Kelalaian Target:</span>
+                        <span id="ta-salary-penalty-label">Potongan Meleset Target:</span>
                         <span id="ta-salary-penalty">- Rp 0</span>
                     </div>
                     <div class="ta-salary-row final">
-                        <span>Sisa Gaji Bersih:</span>
+                        <span>Sisa Gaji Bisa Dicairkan:</span>
                         <span id="ta-salary-final">Rp 0</span>
                     </div>
                 </div>
@@ -316,7 +320,6 @@
         let currentRekening = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN & WA
         const MASTER_ADMIN_ID = "7a4e848d-7ea7-4f97-ae78-7384e0b71837"; 
         const NOMOR_WA_ADMIN = "6281339760265"; 
         
@@ -473,20 +476,14 @@
                     hariKerjaBulanIni = (dateObj.getDate() - leaderJoinDate.getDate()) + 1;
                 }
                 
-                let targetProRata = hariKerjaBulanIni * 2;
-                
                 let uangNgopi = aktifHr * 10000;
                 if (uangNgopi > 35000) uangNgopi = 35000;
                 
-                // Penalty Calculation
-                let defisit = targetProRata - aktifBln;
-                if(defisit < 0) defisit = 0;
-                let potongan = defisit * 25000; 
-                if(potongan > 1500000) potongan = 1500000;
-                let gaji = 1500000 - potongan;
+                // Admin math: Hanya bayar 25k per kawan aktif
+                let gaji = aktifBln * 25000; 
+                if(gaji > 1500000) gaji = 1500000;
 
                 const tr = document.createElement('tr');
-                // Mengirim parameter data bank ke fungsi modal
                 tr.innerHTML = `
                     <td style="font-weight:600;">${leader.nama}</td>
                     <td><span style="color:#f59e0b;font-weight:bold;">${aktifHr}</span> / <span style="color:#10b981;font-weight:bold;">${aktifBln}</span></td>
@@ -529,7 +526,7 @@
         }
 
         // ==========================================
-        // SISTEM HRD OTOMATIS (TIM ARUS) - DENGAN PRO RATA
+        // SISTEM HRD OTOMATIS (TIM ARUS) - DENGAN PRO RATA PSIKOLOGIS
         // ==========================================
         async function loadTimArusData(userJoinDateStr) {
             const GAJI_POKOK = 1500000;
@@ -543,18 +540,16 @@
 
             // LOGIKA PRO RATA TANGGAL BERGABUNG
             const joinDate = new Date(userJoinDateStr);
-            let hariKerjaBulanIni = dateObj.getDate(); // Default jika gabung bulan lalu
+            let hariKerjaBulanIni = dateObj.getDate(); 
             let isProRata = false;
 
             if (joinDate.getMonth() === dateObj.getMonth() && joinDate.getFullYear() === dateObj.getFullYear()) {
-                // Jika gabung di bulan yang sama dengan sekarang, hitung harinya
                 hariKerjaBulanIni = (dateObj.getDate() - joinDate.getDate()) + 1;
                 isProRata = true;
             }
 
-            // Target Bulanan maksimal menyesuaikan sisa hari di bulan tersebut jika dia baru gabung
             let sisaHariBulanIni = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate() - dateObj.getDate() + hariKerjaBulanIni;
-            let targetMaxBulanan = isProRata ? sisaHariBulanIni * TARGET_HARIAN : 60; // 60 jika full sebulan
+            let targetMaxBulanan = isProRata ? sisaHariBulanIni * TARGET_HARIAN : 60; 
 
             if (isProRata) {
                 document.getElementById('ta-prorata-info').innerText = `*Mode Pro Rata aktif. Anda bergabung tanggal ${joinDate.getDate()}. Target disesuaikan.`;
@@ -581,6 +576,7 @@
                 });
             }
 
+            // --- 1. UANG NGOPI (HARIAN) ---
             document.getElementById('ta-daily-count').innerText = aktifHariIni;
             ta_uangNgopi = aktifHariIni * 10000;
             if (ta_uangNgopi > 35000) ta_uangNgopi = 35000; 
@@ -596,7 +592,7 @@
                 btnNgopi.style.boxShadow = "0 4px 10px rgba(16, 185, 129, 0.3)";
             }
 
-            // Hitung KPI Berdasarkan Target Max Bulanan
+            // --- 2. KPI BULANAN & PUNISHMENT (PRO RATA PSIKOLOGIS) ---
             let persenKpi = (aktifBulanIni / targetMaxBulanan) * 100;
             if(persenKpi > 100) persenKpi = 100;
             
@@ -606,16 +602,37 @@
             kpiBar.style.width = `${persenKpi}%`;
             if(persenKpi >= SYARAT_WD_PERSEN) kpiBar.classList.remove('danger');
 
-            // Hukuman harian dihitung berdasarkan hari kerja dia (Pro Rata)
-            const targetSeharusnyaHariIni = hariKerjaBulanIni * TARGET_HARIAN;
-            let defisit = targetSeharusnyaHariIni - aktifBulanIni;
-            if (defisit < 0) defisit = 0;
+            // Kalkulasi Hak Gaji Berjalan vs Potongan Kelalaian
+            let gajiBerjalan = hariKerjaBulanIni * 50000;
+            if(gajiBerjalan > GAJI_POKOK) gajiBerjalan = GAJI_POKOK;
 
-            let totalPotongan = defisit * DENDA_PER_ORANG;
-            if (totalPotongan > GAJI_POKOK) totalPotongan = GAJI_POKOK;
-            ta_gajiBulanan = GAJI_POKOK - totalPotongan;
+            document.getElementById('ta-hari-kerja').innerText = hariKerjaBulanIni;
+            document.getElementById('ta-gaji-berjalan').innerText = "Rp " + gajiBerjalan.toLocaleString('id-ID');
 
-            document.getElementById('ta-salary-penalty').innerText = "- Rp " + totalPotongan.toLocaleString('id-ID');
+            let targetProRata = hariKerjaBulanIni * TARGET_HARIAN;
+            let defisit = targetProRata - aktifBulanIni;
+            let totalPotongan = 0;
+            let totalBonus = 0;
+
+            if (defisit > 0) {
+                totalPotongan = defisit * DENDA_PER_ORANG;
+                document.getElementById('ta-salary-penalty-label').innerText = "Potongan Meleset Target:";
+                document.getElementById('ta-salary-penalty').innerText = "- Rp " + totalPotongan.toLocaleString('id-ID');
+                document.getElementById('ta-salary-penalty').style.color = "#ef4444";
+            } else if (defisit < 0) {
+                totalBonus = Math.abs(defisit) * DENDA_PER_ORANG;
+                document.getElementById('ta-salary-penalty-label').innerText = "Bonus Over Target:";
+                document.getElementById('ta-salary-penalty').innerText = "+ Rp " + totalBonus.toLocaleString('id-ID');
+                document.getElementById('ta-salary-penalty').style.color = "#10b981";
+            } else {
+                document.getElementById('ta-salary-penalty-label').innerText = "Potongan Meleset Target:";
+                document.getElementById('ta-salary-penalty').innerText = "- Rp 0";
+                document.getElementById('ta-salary-penalty').style.color = "#ef4444";
+            }
+
+            ta_gajiBulanan = aktifBulanIni * DENDA_PER_ORANG;
+            if(ta_gajiBulanan > GAJI_POKOK) ta_gajiBulanan = GAJI_POKOK;
+
             document.getElementById('ta-salary-final').innerText = "Rp " + ta_gajiBulanan.toLocaleString('id-ID');
 
             const btnGaji = document.getElementById('btnGajiBulanan');
@@ -630,6 +647,7 @@
                 btnGaji.innerText = `🔒 Gaji Terkunci (KPI Baru ${persenKpi.toFixed(1)}%)`;
             }
 
+            // --- 3. P2P INCOME ---
             document.getElementById('ta-p2p-income').innerText = "Rp " + (aktifBulanIni * 30000).toLocaleString('id-ID');
         }
 
