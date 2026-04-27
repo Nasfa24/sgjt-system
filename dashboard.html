@@ -35,8 +35,11 @@
         #admin-table, #admin-hrd-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         #admin-table th, #admin-hrd-table th { background: #e0e7ff; padding: 12px; text-align: left; color: #3730a3; font-weight: 700; }
         #admin-table td, #admin-hrd-table td { padding: 12px; border-bottom: 1px solid #e0e7ff; color: #475569; vertical-align: middle; }
-        .btn-admin-approve { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-admin-approve:hover { background: #059669; }
+        .btn-admin-action { border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.75rem; margin-bottom: 4px; width: 100%; }
+        .btn-admin-action.approve { background: #10b981; color: white; }
+        .btn-admin-action.approve:hover { background: #059669; }
+        .btn-admin-action.chat { background: #25D366; color: white; }
+        .btn-admin-action.pay { background: #f59e0b; color: white; }
         
         /* CSS WA GRUP & PROSPEK */
         .wa-group-box { background: #ecfdf5; border: 2px dashed #10b981; padding: 20px; border-radius: 16px; margin: 24px 0; }
@@ -103,6 +106,28 @@
         </div>
     </div>
 
+    <div id="payModal" class="custom-modal-overlay">
+        <div class="custom-modal" style="text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#1e293b;">Data Rekening Tim</h3>
+                <span onclick="document.getElementById('payModal').style.display='none'" style="cursor:pointer; font-size:1.5rem; color:#ef4444;">&times;</span>
+            </div>
+            <div style="background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;">
+                <small style="color:#64748b; font-weight:bold;">NAMA PENERIMA</small>
+                <h4 id="pay-nama" style="margin:5px 0 15px 0; color:#0f172a;">-</h4>
+                
+                <small style="color:#64748b; font-weight:bold;">BANK TUJUAN</small>
+                <h4 id="pay-bank" style="margin:5px 0 15px 0; color:#f59e0b; font-size:1.2rem;">-</h4>
+                
+                <small style="color:#64748b; font-weight:bold;">NOMOR REKENING</small>
+                <div style="display:flex; gap:10px; justify-content:center; align-items:center;">
+                    <h3 id="pay-rek" style="margin:5px 0; color:#4f46e5; font-size:1.5rem; letter-spacing:1px;">-</h3>
+                </div>
+            </div>
+            <button onclick="salinRekeningTim()" style="width:100%; margin-top:15px; padding:12px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">📋 Salin Nomor Rekening</button>
+        </div>
+    </div>
+
     <div id="genericConfirmModal" class="custom-modal-overlay">
         <div class="custom-modal">
             <span id="gcm-icon" class="modal-icon">⚠️</span>
@@ -155,7 +180,7 @@
                 <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 0.95rem;">💼 Laporan HRD Tim Arus</h4>
                 <div style="overflow-x:auto; border-radius: 8px;">
                     <table id="admin-hrd-table">
-                        <thead><tr><th>Nama Tim</th><th>Aktif (H/B)</th><th>Ngopi (H)</th><th>Gaji (B)</th><th>Aksi</th></tr></thead>
+                        <thead><tr><th>Nama Tim</th><th>Aktif (H/Bln)</th><th>Ngopi (Harian)</th><th>Gaji (Bulanan)</th><th>Tindakan Manual</th></tr></thead>
                         <tbody id="admin-hrd-list">
                             <tr><td colspan='5' style='text-align:center;'>Memuat data tim...</td></tr>
                         </tbody>
@@ -178,6 +203,7 @@
                 <div class="ta-badge">DIREKTORAT TIM ARUS</div>
                 <h3 style="margin: 8px 0 0 0; font-size: 1.3rem; font-weight: 800;">Dashboard Kinerja (HRD)</h3>
                 <p id="ta-period" style="font-size: 0.85rem; color: #94a3b8; margin-top: 6px; font-weight: 500;">Periode: ...</p>
+                <div id="ta-prorata-info" style="font-size: 0.75rem; color: #fef08a; margin-top: 4px; font-style: italic;"></div>
             </div>
 
             <div class="ta-card daily">
@@ -202,7 +228,7 @@
 
             <div class="ta-card monthly">
                 <h4 class="ta-title">📉 KPI Bulanan (Gaji Pokok)</h4>
-                <p class="ta-subtitle">Target 60 kawan/bulan (2/hari). Gaji terkunci jika di bawah 90%. Kelalaian harian memotong gaji pokok.</p>
+                <p class="ta-subtitle" id="ta-kpi-desc">Target 60 kawan/bulan (2/hari). Gaji terkunci jika di bawah 90%. Kelalaian harian memotong gaji pokok.</p>
                 
                 <div class="ta-prog-head">
                     <span>Pencapaian Bulan Ini</span>
@@ -216,7 +242,7 @@
                 <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 12px; border: 1px dashed #fecaca;">
                     <div class="ta-salary-row">
                         <span>Gaji Pokok Maksimal:</span>
-                        <span>Rp 1.500.000</span>
+                        <span id="ta-base-salary">Rp 1.500.000</span>
                     </div>
                     <div class="ta-salary-row penalty">
                         <span>Potongan Kelalaian Target:</span>
@@ -290,7 +316,6 @@
         let currentRekening = "";
         let isPendingRendered = false; 
         
-        // KONFIGURASI ADMIN & WA
         const MASTER_ADMIN_ID = "7a4e848d-7ea7-4f97-ae78-7384e0b71837"; 
         const NOMOR_WA_ADMIN = "6281339760265"; 
         
@@ -308,6 +333,7 @@
 
         let ta_uangNgopi = 0;
         let ta_gajiBulanan = 0;
+        let tempBankRekening = "";
 
         window.closeGenericModal = function(val) {
             document.getElementById('genericConfirmModal').style.display = 'none';
@@ -356,7 +382,7 @@
                     } 
                     else if (data.role === 'TIM_ARUS') {
                         document.getElementById('tim-arus-panel').classList.remove('hidden');
-                        loadTimArusData();
+                        loadTimArusData(data.created_at);
                     }
 
                     if (data.status === "ACTIVE") {
@@ -405,10 +431,10 @@
         }
 
         // ==========================================
-        // FITUR ADMIN: REKAP BEBAN HRD & TANYA KABAR
+        // FITUR ADMIN: REKAP BEBAN HRD & TRANSFER
         // ==========================================
         async function loadAdminHRDSummary() {
-            const { data: timArusMembers } = await supabase.from('users').select('id, nama, no_wa').eq('role', 'TIM_ARUS');
+            const { data: timArusMembers } = await supabase.from('users').select('id, nama, no_wa, bank, rekening, created_at').eq('role', 'TIM_ARUS');
             const tbody = document.getElementById('admin-hrd-list');
             tbody.innerHTML = '';
 
@@ -417,9 +443,7 @@
                 return;
             }
 
-            // PERBAIKAN 1: Filter agar nama yang sama tidak muncul ganda (Deduplikasi by ID)
             const uniqueLeaders = Array.from(new Map(timArusMembers.map(item => [item.id, item])).values());
-
             const dateObj = new Date();
             const todayStr = dateObj.toLocaleDateString('en-CA');
             const firstDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString();
@@ -441,28 +465,53 @@
                     });
                 }
 
+                // Kalkulasi Pro Rata untuk Admin View
+                const leaderJoinDate = new Date(leader.created_at);
+                let hariKerjaBulanIni = dateObj.getDate();
+                if (leaderJoinDate.getMonth() === dateObj.getMonth() && leaderJoinDate.getFullYear() === dateObj.getFullYear()) {
+                    hariKerjaBulanIni = (dateObj.getDate() - leaderJoinDate.getDate()) + 1;
+                }
+                
+                let targetProRata = hariKerjaBulanIni * 2;
+                let targetMaxBulanIni = 60; // Max normal
+                
                 let uangNgopi = aktifHr * 10000;
                 if (uangNgopi > 35000) uangNgopi = 35000;
                 
-                // Menggunakan target harian 2 (Prinsip Awal)
-                let defisit = (dateObj.getDate() * 2) - aktifBln;
+                let defisit = targetProRata - aktifBln;
                 if(defisit < 0) defisit = 0;
-                let potongan = defisit * 25000; // 60 orang * 25k = 1.5jt
+                let potongan = defisit * 25000; 
                 if(potongan > 1500000) potongan = 1500000;
                 let gaji = 1500000 - potongan;
 
                 const tr = document.createElement('tr');
+                // Mengirim parameter data bank ke fungsi modal
                 tr.innerHTML = `
                     <td style="font-weight:600;">${leader.nama}</td>
                     <td><span style="color:#f59e0b;font-weight:bold;">${aktifHr}</span> / <span style="color:#10b981;font-weight:bold;">${aktifBln}</span></td>
                     <td style="color:#d97706;font-weight:600;">Rp ${uangNgopi.toLocaleString('id-ID')}</td>
                     <td style="color:#0f172a;font-weight:600;">Rp ${gaji.toLocaleString('id-ID')}</td>
                     <td>
-                        <button onclick="hubungiTimArus('${leader.nama}', '${leader.no_wa || ''}', ${aktifBln})" style="background:#25D366; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:700; box-shadow:0 2px 4px rgba(37,211,102,0.2);">Tanya Kabar 💬</button>
+                        <button onclick="hubungiTimArus('${leader.nama}', '${leader.no_wa || ''}', ${aktifBln})" class="btn-admin-action chat">Tanya Kabar 💬</button><br>
+                        <button onclick="bukaModalTransfer('${leader.nama}', '${leader.bank}', '${leader.rekening}')" class="btn-admin-action pay">Transfer Gaji/Ngopi 💳</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             }
+        }
+
+        window.bukaModalTransfer = function(nama, bank, rekening) {
+            document.getElementById('pay-nama').innerText = nama;
+            document.getElementById('pay-bank').innerText = bank;
+            document.getElementById('pay-rek').innerText = rekening;
+            tempBankRekening = rekening;
+            document.getElementById('payModal').style.display = 'flex';
+        }
+
+        window.salinRekeningTim = function() {
+            navigator.clipboard.writeText(tempBankRekening);
+            showToast("Nomor rekening berhasil disalin!", "success");
+            document.getElementById('payModal').style.display = 'none';
         }
 
         window.hubungiTimArus = function(nama, no_wa, aktifBln) {
@@ -470,24 +519,19 @@
                 showToast("Nomor WhatsApp tidak tersimpan untuk anggota ini.", "error");
                 return;
             }
-            
             let waClean = no_wa.toString().replace(/[^0-9]/g, '');
             if (waClean.startsWith('0')) waClean = '62' + waClean.substring(1);
             else if (!waClean.startsWith('62')) waClean = '62' + waClean;
 
-            // PERBAIKAN 4: Pesan yang sangat santun dan mengayomi
             const pesan = `Halo Kak ${nama}, gimana kabarnya hari ini? Sehat ya? 😊\n\nSaya dari pusat (Arsitek Sistem ARUS) kebetulan lagi cek laporan nih. Saya lihat progres bulan ini Kakak baru mencapai ${aktifBln} kawan aktif.\n\nKira-kira di lapangan ada kendala apa Kak? Apa ada calon kawan yang masih bingung dengan sistemnya, atau butuh bantuan strategi dari pusat?\n\nNgobrol santai aja Kak, nggak usah sungkan. Peran saya di sini memang untuk *support* dan bantu teman-teman Tim Arus supaya gajinya bisa cair maksimal di akhir bulan.\n\nPelan-pelan nggak apa-apa, yang penting kita konsisten dan jalan bareng-bareng. Tetap semangat ya Kak! 🌊🔥`;
-
             window.open(`https://wa.me/${waClean}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
 
         // ==========================================
-        // SISTEM HRD OTOMATIS (TIM ARUS)
+        // SISTEM HRD OTOMATIS (TIM ARUS) - DENGAN PRO RATA
         // ==========================================
-        async function loadTimArusData() {
-            // PERBAIKAN 3: KEMBALI KE PRINSIP AWAL (2 KAWAN/HARI, 60 KAWAN/BULAN)
+        async function loadTimArusData(userJoinDateStr) {
             const GAJI_POKOK = 1500000;
-            const TARGET_BULANAN = 60;
             const TARGET_HARIAN = 2;
             const DENDA_PER_ORANG = 25000;
             const SYARAT_WD_PERSEN = 90;
@@ -495,6 +539,25 @@
             const dateObj = new Date();
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             document.getElementById('ta-period').innerText = `Bulan: ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+
+            // LOGIKA PRO RATA TANGGAL BERGABUNG
+            const joinDate = new Date(userJoinDateStr);
+            let hariKerjaBulanIni = dateObj.getDate(); // Default jika gabung bulan lalu
+            let isProRata = false;
+
+            if (joinDate.getMonth() === dateObj.getMonth() && joinDate.getFullYear() === dateObj.getFullYear()) {
+                // Jika gabung di bulan yang sama dengan sekarang, hitung harinya
+                hariKerjaBulanIni = (dateObj.getDate() - joinDate.getDate()) + 1;
+                isProRata = true;
+            }
+
+            // Target Bulanan maksimal menyesuaikan sisa hari di bulan tersebut jika dia baru gabung
+            let sisaHariBulanIni = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate() - dateObj.getDate() + hariKerjaBulanIni;
+            let targetMaxBulanan = isProRata ? sisaHariBulanIni * TARGET_HARIAN : 60; // 60 jika full sebulan
+
+            if (isProRata) {
+                document.getElementById('ta-prorata-info').innerText = `*Mode Pro Rata aktif. Anda bergabung tanggal ${joinDate.getDate()}. Target disesuaikan.`;
+            }
 
             const todayStr = dateObj.toLocaleDateString('en-CA'); 
             const firstDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString();
@@ -532,17 +595,19 @@
                 btnNgopi.style.boxShadow = "0 4px 10px rgba(16, 185, 129, 0.3)";
             }
 
-            let persenKpi = (aktifBulanIni / TARGET_BULANAN) * 100;
+            // Hitung KPI Berdasarkan Target Max Bulanan
+            let persenKpi = (aktifBulanIni / targetMaxBulanan) * 100;
             if(persenKpi > 100) persenKpi = 100;
             
-            document.getElementById('ta-kpi-text').innerText = `${aktifBulanIni} / ${TARGET_BULANAN} Kawan`;
+            document.getElementById('ta-kpi-desc').innerText = `Target disesuaikan: ${targetMaxBulanan} kawan/bulan. Gaji terkunci jika di bawah 90%.`;
+            document.getElementById('ta-kpi-text').innerText = `${aktifBulanIni} / ${targetMaxBulanan} Kawan`;
             const kpiBar = document.getElementById('ta-kpi-bar');
             kpiBar.style.width = `${persenKpi}%`;
             if(persenKpi >= SYARAT_WD_PERSEN) kpiBar.classList.remove('danger');
 
-            const hariIni = dateObj.getDate();
-            const targetSeharusnya = hariIni * TARGET_HARIAN;
-            let defisit = targetSeharusnya - aktifBulanIni;
+            // Hukuman harian dihitung berdasarkan hari kerja dia (Pro Rata)
+            const targetSeharusnyaHariIni = hariKerjaBulanIni * TARGET_HARIAN;
+            let defisit = targetSeharusnyaHariIni - aktifBulanIni;
             if (defisit < 0) defisit = 0;
 
             let totalPotongan = defisit * DENDA_PER_ORANG;
@@ -568,19 +633,18 @@
         }
 
         window.klaimUangNgopi = function() {
-            const pesan = `*KLAIM UANG NGOPI HARIAN* ☕\n\nHalo Admin, saya mau klaim hasil kerja keras hari ini!\n\n👤 *Nama:* ${currentUserName}\n💸 *Nominal Cair:* Rp ${ta_uangNgopi.toLocaleString('id-ID')}\n\nMohon ditransfer ke rekening saya:\n🏦 *Bank:* ${currentBank}\n💳 *Rekening:* ${currentRekening}\n\nSiap lanjut gas besok!`;
+            const pesan = `*KLAIM UANG NGOPI HARIAN* ☕\n\nHalo Admin, saya mau klaim hasil kerja keras hari ini!\n\n👤 *Nama:* ${currentUserName}\n💸 *Nominal Cair:* Rp ${ta_uangNgopi.toLocaleString('id-ID')}\n\nSiap lanjut gas besok!`;
             window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
             showToast("Permintaan Uang Ngopi diteruskan ke Admin!", "success");
         }
 
         window.cairkanGajiBulanan = function() {
-            const pesan = `*PENCAIRAN GAJI TIM ARUS* 💼\n\nHalo Pak Admin, Laporan: Target KPI bulan ini telah tembus batas minimum 90%!\n\n👤 *Nama:* ${currentUserName}\n💰 *Total Gaji Bersih:* Rp ${ta_gajiBulanan.toLocaleString('id-ID')}\n\nMohon segera diproses ke rekening saya:\n🏦 *Bank:* ${currentBank}\n💳 *Rekening:* ${currentRekening}\n\nSiap amankan target bulan depan!`;
+            const pesan = `*PENCAIRAN GAJI TIM ARUS* 💼\n\nHalo Pak Admin, Laporan: Target KPI bulan ini telah tembus batas minimum 90%!\n\n👤 *Nama:* ${currentUserName}\n💰 *Total Gaji Bersih:* Rp ${ta_gajiBulanan.toLocaleString('id-ID')}\n\nSiap amankan target bulan depan!`;
             window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
             showToast("Slip gaji diteruskan ke Direktur!", "success");
         }
 
         window.laporSaluranWA = function() {
-            // Laporan dikirim dengan format instruksi manual screenshot
             const pesan = `*LAPORAN MISI MINGGUAN: RETENSI KOMUNITAS* 📢\n\nHalo Pak Arsitek, saya telah berhasil mengarahkan kawan-kawan baru untuk bergabung ke Saluran WhatsApp ARUS. Berikut saya lampirkan buktinya (Screenshot) di bawah pesan ini ya.`;
             window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${encodeURIComponent(pesan)}`, '_blank');
         }
