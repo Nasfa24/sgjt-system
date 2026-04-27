@@ -316,6 +316,7 @@
         let currentRekening = "";
         let isPendingRendered = false; 
         
+        // KONFIGURASI ADMIN & WA
         const MASTER_ADMIN_ID = "7a4e848d-7ea7-4f97-ae78-7384e0b71837"; 
         const NOMOR_WA_ADMIN = "6281339760265"; 
         
@@ -473,11 +474,11 @@
                 }
                 
                 let targetProRata = hariKerjaBulanIni * 2;
-                let targetMaxBulanIni = 60; // Max normal
                 
                 let uangNgopi = aktifHr * 10000;
                 if (uangNgopi > 35000) uangNgopi = 35000;
                 
+                // Penalty Calculation
                 let defisit = targetProRata - aktifBln;
                 if(defisit < 0) defisit = 0;
                 let potongan = defisit * 25000; 
